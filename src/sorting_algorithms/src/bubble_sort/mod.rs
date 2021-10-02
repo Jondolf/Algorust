@@ -12,9 +12,9 @@ use crate::SortResult;
 /// let sorted = sort(&arr).arr;
 /// assert_eq!(target, sorted);
 /// ```
-pub fn sort(arr: &Vec<i32>) -> SortResult {
-    let mut sorted: Vec<i32> = arr.to_vec();
-    let mut steps: Vec<Vec<i32>> = vec![sorted.clone()];
+pub fn sort<T: Clone + PartialOrd>(arr: &Vec<T>) -> SortResult<T> {
+    let mut sorted: Vec<T> = arr.to_vec();
+    let mut steps: Vec<Vec<T>> = vec![sorted.clone()];
     for i in 0..sorted.len() {
         let mut swapped = false;
         for j in 0..sorted.len() - i - 1 {

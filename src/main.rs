@@ -14,7 +14,7 @@ struct App {
     link: ComponentLink<Self>,
     values: Vec<i32>,
     input_len: u32,
-    output: SortResult,
+    output: SortResult<i32>,
 }
 
 impl Component for App {
