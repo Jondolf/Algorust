@@ -1,0 +1,12 @@
+[package]
+name = "sorting_algorithms_web"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+yew = "0.18"
+rand = "0.8.4"
+getrandom = { version = "0.2.3", features = ["js"] }
+
+[dependencies.sorting_algorithms]
+path = "./src/sorting_algorithms"

@@ -1,0 +1,29 @@
+html,
+body,
+#app {
+  margin: 0;
+  min-height: 100vh;
+}
+
+#app {
+  padding: 1.5rem;
+  background-color: hsl(200, 10%, 15%);
+  color: white;
+
+  * {
+    background-color: transparent;
+    color: white;
+    font-family: "Roboto Mono", Consolas, monospace;
+  }
+
+  button,
+  input,
+  textarea {
+    border: 2px solid white;
+    border-radius: 0.25rem;
+    outline: none;
+    padding: 0.75rem;
+    margin: 1rem 2rem 1rem 0;
+    background-color: hsl(200, 15%, 25%);
+  }
+}
