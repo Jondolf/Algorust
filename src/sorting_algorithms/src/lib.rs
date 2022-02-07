@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 pub mod bubble_sort;
+pub mod insertion_sort;
 
 #[derive(Clone, PartialEq)]
 pub struct SortResult<T> {

@@ -23,6 +23,10 @@ pub const SORTING_ALGORITHMS: [SortingAlgorithm<i32>; 3] = [
         name: "Bubble sort",
         sort: bubble_sort::sort,
     },
+    SortingAlgorithm {
+        name: "Insertion sort",
+        sort: insertion_sort::sort,
+    },
 ];
 
 pub enum Msg {
