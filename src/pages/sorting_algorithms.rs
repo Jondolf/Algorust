@@ -27,6 +27,10 @@ pub const SORTING_ALGORITHMS: [SortingAlgorithm<i32>; 3] = [
         name: "Insertion sort",
         sort: insertion_sort::sort,
     },
+    SortingAlgorithm {
+        name: "Merge sort",
+        sort: merge_sort::sort,
+    },
 ];
 
 pub enum Msg {
