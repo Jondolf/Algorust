@@ -1,9 +1,11 @@
 use crate::SortResult;
 
-/// # Bubble sort
-/// Sorts a list of values of type T by comparing ...
+/// # Bubble sort algorithm
+///
+/// Sorts a list of values of type T with the bubble sort algorithm.
 ///
 /// ## Example
+///
 /// ```rust
 /// use sorting_algorithms::{bubble_sort::sort, SortResult};
 ///
@@ -12,21 +14,23 @@ use crate::SortResult;
 /// let sorted = sort(&arr).arr;
 /// assert_eq!(target, sorted);
 /// ```
-pub fn sort<T: Clone + PartialOrd>(arr: &Vec<T>) -> SortResult<T> {
-    let mut sorted: Vec<T> = arr.to_vec();
-    let mut steps: Vec<Vec<T>> = vec![sorted.clone()];
-    for i in 0..sorted.len() {
+pub fn sort<T: Clone + Ord>(items: Vec<T>) -> SortResult<T> {
+    let mut items = items.clone();
+    let mut steps: Vec<Vec<T>> = vec![];
+    let start = instant::Instant::now();
+    for i in 0..items.len() {
         let mut swapped = false;
-        for j in 0..sorted.len() - i - 1 {
-            if sorted[j] > sorted[j + 1] {
-                sorted.swap(j, j + 1);
+        for j in 0..items.len() - i - 1 {
+            if items[j] > items[j + 1] {
+                items.swap(j, j + 1);
                 swapped = true;
             }
-            steps.push(sorted.clone());
         }
+        steps.push(items.clone());
         if !swapped {
             break;
         }
     }
-    SortResult { arr: sorted, steps }
+    let duration = start.elapsed();
+    SortResult::new(items, Some(duration), steps)
 }
