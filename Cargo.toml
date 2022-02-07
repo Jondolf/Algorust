@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-yew = "0.18"
+yew = "0.19.3"
+yew-router = "0.16.0"
+web-sys = "0.3.56"
+wasm-logger = "0.2.0"
+log = "0.4.14"
 rand = "0.8.4"
 getrandom = { version = "0.2.3", features = ["js"] }
 
