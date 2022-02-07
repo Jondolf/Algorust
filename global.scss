@@ -1,13 +1,64 @@
 button,
 input,
-select,
-textarea {
-  border: 2px solid white;
-  border-radius: 0.25rem;
+select {
+  border: none;
   outline: none;
-  padding: 0.75rem;
-  margin: 1rem 2rem 1rem 0;
-  background-color: hsl(200, 15%, 25%);
+  margin: 0;
+  padding: 0;
+}
+
+.sort-controls {
+  display: flex;
+
+  button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 3.25rem;
+    margin-right: 1rem;
+    padding: 0 0.5rem;
+    border: 2px solid white;
+    border-radius: 0.25rem;
+    outline: none;
+    background-color: hsl(200, 15%, 25%);
+    box-sizing: border-box;
+    transition: 250ms ease;
+
+    &:active {
+      color: #adff2f;
+      border: 2px solid #adff2f;
+    }
+  }
+
+  .sort-control-item {
+    position: relative;
+    margin: 0 1rem;
+
+    label {
+      position: absolute;
+      top: 0.5em;
+      left: 0.5rem;
+      font-size: 0.75em;
+      color: #adff2fbb;
+    }
+
+    input,
+    select {
+      display: block;
+      height: 3.25rem;
+      padding: 1rem 0.5rem 0.1rem 0.5rem;
+      border: 2px solid white;
+      border-radius: 0.25rem;
+      outline: none;
+      background-color: hsl(200, 15%, 25%);
+      box-sizing: border-box;
+      transition: 250ms ease;
+
+      &:focus {
+        border: 2px solid #adff2f;
+      }
+    }
+  }
 }
 
 input[type="range"] {

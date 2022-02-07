@@ -127,7 +127,7 @@ impl Component for SortingAlgorithms {
 
                 <SortControls config={self.sort_config.clone()} {update_input} {update_config} />
 
-                <Collapsible open={true} title={"Input value"}>
+                <Collapsible open={true} title={"Input values"}>
                     <pre>{ &self.input.iter().map(|val| val.to_string()).collect::<Vec<String>>().join(", ") }</pre>
                 </Collapsible>
 
@@ -147,7 +147,7 @@ impl Component for SortingAlgorithms {
                     </p>
 
                     <label for="active-step-input">{ format!("Step: {}", self.active_step + 1) }</label>
-                    <input type="range" id="active-step-input" min="0" max={(self.steps.len()-1).to_string()} value={self.active_step.to_string()} oninput={change_active_step} />
+                    <input type="range" id="active-step-input" min="0" max={(self.steps.len() - 1).to_string()} value={self.active_step.to_string()} oninput={change_active_step} />
 
                     <Collapsible open={true} title={"Output graph"}>
                         <SortGraph values={self.steps[self.active_step].clone()} />

@@ -94,28 +94,45 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
     };
 
     html! {
-        <>
-            <button onclick={gen_input}>{"Generate list of i32"}</button>
-            <input type="number"
-                placeholder="Input length"
-                min=1
-                value={props.config.input_len.to_string()}
-                oninput={change_input_len}
-            />
-            <input type="number"
-                placeholder="Minimum value"
-                value={props.config.min_val.to_string()}
-                oninput={change_min_val}
-            />
-            <input type="number"
-                placeholder="Maximum value"
-                value={props.config.max_val.to_string()}
-                oninput={change_max_val}
-            />
-            <select name="Sorting algorithm" onchange={change_algorithm}>
-                { for SORTING_ALGORITHMS.iter().map(|a| view_sorting_algorithm_option(config.sorting_algorithm.name, a.name)) }
-            </select>
-        </>
+        <div class={classes!("sort-controls")}>
+            <button onclick={gen_input}>{"Generate input"}</button>
+            <div class="sort-control-item">
+                <label for="inputLength">{"Input length"}</label>
+                <input id="inputLength"
+                    type="number"
+                    placeholder="Input length"
+                    min=1
+                    value={props.config.input_len.to_string()}
+                    oninput={change_input_len}
+                />
+            </div>
+            <div class="sort-control-item">
+                <label for="inputMin">{"Min"}</label>
+                <input id="inputMin"
+                    type="number"
+                    placeholder="Minimum value"
+                    value={props.config.min_val.to_string()}
+                    oninput={change_min_val}
+                />
+            </div>
+            <div class="sort-control-item">
+                <label for="inputMax">{"Max"}</label>
+                <input id="inputMax"
+                    type="number"
+                    placeholder="Maximum value"
+                    value={props.config.max_val.to_string()}
+                    oninput={change_max_val}
+                />
+            </div>
+            <div class="sort-control-item">
+                <label for="sortingAlgorithm">{"Algorithm"}</label>
+                <select id="sortingAlgorithm" name="Sorting algorithm" onchange={change_algorithm}>
+                    {
+                        SORTING_ALGORITHMS.iter().map(|a| view_sorting_algorithm_option(config.sorting_algorithm.name, a.name)).collect::<Html>()
+                    }
+                </select>
+            </div>
+        </div>
     }
 }
 
