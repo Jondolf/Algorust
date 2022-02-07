@@ -3,6 +3,20 @@
 version = 3
 
 [[package]]
+name = "algorithms_website"
+version = "0.1.0"
+dependencies = [
+ "getrandom",
+ "log",
+ "rand",
+ "sorting_algorithms",
+ "wasm-logger",
+ "web-sys",
+ "yew",
+ "yew-router",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -452,20 +466,6 @@ dependencies = [
  "instant",
  "log",
  "wasm-logger",
-]
-
-[[package]]
-name = "sorting_algorithms_web"
-version = "0.1.0"
-dependencies = [
- "getrandom",
- "log",
- "rand",
- "sorting_algorithms",
- "wasm-logger",
- "web-sys",
- "yew",
- "yew-router",
 ]
 
 [[package]]
