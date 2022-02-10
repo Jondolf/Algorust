@@ -52,7 +52,7 @@ impl Default for SortConfig {
             input_len: 20,
             min_val: 0,
             max_val: 99,
-            sorting_algorithm: SortingAlgorithm::new("Bubble sort", bubble_sort::sort),
+            sorting_algorithm: SORTING_ALGORITHMS[0].clone(),
         }
     }
 }
@@ -62,7 +62,7 @@ pub struct SortingAlgorithms {
     output: SortResult<i32>,
     sort_config: SortConfig,
     steps: Vec<Vec<i32>>,
-    active_step: usize,
+    active_step_index: usize,
 }
 
 impl Component for SortingAlgorithms {
@@ -83,7 +83,7 @@ impl Component for SortingAlgorithms {
             output: SortResult::new(output.value, output.duration, output.steps.clone()),
             sort_config,
             steps: output.steps,
-            active_step,
+            active_step_index: active_step,
         }
     }
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -100,8 +100,8 @@ impl Component for SortingAlgorithms {
             }
             Msg::ChangeActiveStep(res) => {
                 if let Ok(val) = res {
-                    if self.active_step != val {
-                        self.active_step = val;
+                    if self.active_step_index != val {
+                        self.active_step_index = val;
                         return true;
                     }
                 }
@@ -110,6 +110,25 @@ impl Component for SortingAlgorithms {
         }
     }
     fn view(&self, ctx: &Context<Self>) -> Html {
+        let active_step = &self.steps[self.active_step_index];
+        let input_str = &self
+            .input
+            .iter()
+            .map(|val| val.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        let step_output_str = active_step
+            .iter()
+            .map(|val| val.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        let sort_duration = format!(
+            "Sort duration: {:?} ms",
+            match &self.output.duration {
+                Some(dur) => dur.as_millis(),
+                None => 0,
+            }
+        );
         let change_active_step = ctx.link().callback(|e: InputEvent| {
             let el: HtmlInputElement = e.target_unchecked_into();
             Msg::ChangeActiveStep(el.value().parse::<usize>())
@@ -128,7 +147,7 @@ impl Component for SortingAlgorithms {
                 <SortControls config={self.sort_config.clone()} {update_input} {update_config} />
 
                 <Collapsible open={true} title={"Input values"}>
-                    <pre>{ &self.input.iter().map(|val| val.to_string()).collect::<Vec<String>>().join(", ") }</pre>
+                    <pre>{ input_str }</pre>
                 </Collapsible>
 
                 <Collapsible open={false} title={"Input graph"}>
@@ -137,24 +156,17 @@ impl Component for SortingAlgorithms {
 
                 <div class={classes!("sort-visualizations")}>
                     <h2>{ format!("Output ({} steps)", self.steps.len()) }</h2>
-                    <p>
-                    {
-                        format!("Sort duration: {:?} ms", match &self.output.duration {
-                            Some(dur) => dur.as_millis(),
-                            None => 10
-                        })
-                    }
-                    </p>
+                    <p>{ sort_duration }</p>
 
-                    <label for="active-step-input">{ format!("Step: {}", self.active_step + 1) }</label>
-                    <input type="range" id="active-step-input" min="0" max={(self.steps.len() - 1).to_string()} value={self.active_step.to_string()} oninput={change_active_step} />
+                    <label for="active-step-input">{ format!("Step: {}", self.active_step_index + 1) }</label>
+                    <input type="range" id="active-step-input" min="0" max={(self.steps.len() - 1).to_string()} value={self.active_step_index.to_string()} oninput={change_active_step} />
 
                     <Collapsible open={true} title={"Output graph"}>
-                        <SortGraph values={self.steps[self.active_step].clone()} />
+                        <SortGraph values={active_step.clone()} />
                     </Collapsible>
 
                     <Collapsible open={true} title={"Output values"}>
-                        <pre>{ &self.steps[self.active_step].iter().map(|val| val.to_string()).collect::<Vec<String>>().join(", ") }</pre>
+                        <pre>{ step_output_str }</pre>
                     </Collapsible>
                 </div>
             </div>
@@ -169,8 +181,8 @@ impl SortingAlgorithms {
         self.output = SortResult::new(output.value, output.duration, output.steps.clone());
         self.steps = output.steps;
 
-        if self.active_step >= self.steps.len() {
-            self.active_step = self.steps.len() - 1;
+        if self.active_step_index >= self.steps.len() {
+            self.active_step_index = self.steps.len() - 1;
         }
     }
 

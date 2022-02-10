@@ -19,6 +19,11 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
         update_config,
     } = props.clone();
 
+    let algorithm_options = SORTING_ALGORITHMS
+        .iter()
+        .map(|a| view_sorting_algorithm_option(config.sorting_algorithm.name, a.name))
+        .collect::<Html>();
+
     let gen_input = {
         let config = config.clone();
         let update_input = update_input.clone();
@@ -54,10 +59,12 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
         move |e: InputEvent| {
             let el: HtmlInputElement = e.target_unchecked_into();
             if let Ok(min_val) = el.value().parse::<isize>() {
-                update_config.emit(SortConfig {
-                    min_val,
-                    ..config.clone()
-                });
+                if min_val < config.max_val {
+                    update_config.emit(SortConfig {
+                        min_val,
+                        ..config.clone()
+                    });
+                }
             }
         }
     };
@@ -127,9 +134,7 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
             <div class="sort-control-item">
                 <label for="sortingAlgorithm">{"Algorithm"}</label>
                 <select id="sortingAlgorithm" name="Sorting algorithm" onchange={change_algorithm}>
-                    {
-                        SORTING_ALGORITHMS.iter().map(|a| view_sorting_algorithm_option(config.sorting_algorithm.name, a.name)).collect::<Html>()
-                    }
+                    { algorithm_options }
                 </select>
             </div>
         </div>
