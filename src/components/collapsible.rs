@@ -19,7 +19,7 @@ pub fn collapsible(props: &CollapsibleProps) -> Html {
     };
 
     html! {
-      <details open={*open}>
+      <details class="collapsible" open={*open}>
         <summary {onclick}>{props.title.to_string()}</summary>
         {
           if *open {

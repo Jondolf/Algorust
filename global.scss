@@ -9,30 +9,32 @@ select {
 
 .sort-controls {
   display: flex;
-
-  button {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 3.25rem;
-    margin-right: 1rem;
-    padding: 0 0.5rem;
-    border: 2px solid white;
-    border-radius: 0.25rem;
-    outline: none;
-    background-color: hsl(200, 15%, 25%);
-    box-sizing: border-box;
-    transition: 250ms ease;
-
-    &:active {
-      color: #adff2f;
-      border: 2px solid #adff2f;
-    }
-  }
+  flex-wrap: wrap;
 
   .sort-control-item {
     position: relative;
-    margin: 0 1rem;
+    margin-right: 1rem;
+    margin-bottom: 1rem;
+
+    button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 3.25rem;
+      padding: 0.3rem 0.5rem;
+      border: 2px solid white;
+      border-radius: 0.25rem;
+      outline: none;
+      background-color: hsl(200, 15%, 25%);
+      box-sizing: border-box;
+      font-size: 0.9em;
+      transition: border 250ms ease;
+
+      &:active {
+        color: #adff2f;
+        border: 2px solid #adff2f;
+      }
+    }
 
     label {
       position: absolute;
@@ -52,7 +54,8 @@ select {
       outline: none;
       background-color: hsl(200, 15%, 25%);
       box-sizing: border-box;
-      transition: 250ms ease;
+      font-size: 0.9em;
+      transition: border 250ms ease;
 
       &:focus {
         border: 2px solid #adff2f;
@@ -86,11 +89,29 @@ input[type="range"] {
   }
 }
 
-details {
+.collapsible {
+  width: 100%;
   margin: 1em 0;
 }
 
 pre {
   width: 100%;
   white-space: normal;
+}
+
+@media only screen and (max-width: 600px) {
+  body {
+    font-size: 0.8em;
+  }
+
+  .sort-controls .sort-control-item button {
+    height: 2.75rem;
+    padding: 0.3rem;
+  }
+
+  .sort-controls .sort-control-item input,
+  .sort-controls .sort-control-item select {
+    height: 2.75rem;
+    padding: 0.8rem 0.3rem 0 0.3rem;
+  }
 }

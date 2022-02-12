@@ -101,8 +101,10 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
     };
 
     html! {
-        <div class={classes!("sort-controls")}>
-            <button onclick={gen_input}>{"Generate input"}</button>
+        <div class="sort-controls">
+            <div class="sort-control-item">
+                <button onclick={gen_input}>{"Generate input"}</button>
+            </div>
             <div class="sort-control-item">
                 <label for="inputLength">{"Input length"}</label>
                 <input id="inputLength"
