@@ -10,6 +10,7 @@ dependencies = [
  "log",
  "rand",
  "sorting_algorithms",
+ "wasm-bindgen",
  "wasm-logger",
  "web-sys",
  "yew",

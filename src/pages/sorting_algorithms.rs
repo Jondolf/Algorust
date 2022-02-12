@@ -1,5 +1,5 @@
 use crate::components::{
-    collapsible::Collapsible, sort_controls::SortControls, sort_visual::SortGraph,
+    collapsible::Collapsible, sort_controls::SortControls, sort_graph::SortGraph,
 };
 use crate::utils::gen_i32_vec;
 use sorting_algorithms::*;
@@ -11,11 +11,6 @@ use yew::prelude::*;
 pub struct SortingAlgorithm<T: Clone> {
     pub name: &'static str,
     pub sort: fn(Vec<T>) -> SortResult<T>,
-}
-impl<T: Clone> SortingAlgorithm<T> {
-    fn new(name: &'static str, sort: fn(Vec<T>) -> SortResult<T>) -> Self {
-        Self { name, sort }
-    }
 }
 
 pub const SORTING_ALGORITHMS: [SortingAlgorithm<i32>; 3] = [
