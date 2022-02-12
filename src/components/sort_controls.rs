@@ -102,10 +102,10 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
 
     html! {
         <div class="sort-controls">
-            <div class="sort-control-item">
+            <div class="input-item">
                 <button onclick={gen_input}>{"Generate input"}</button>
             </div>
-            <div class="sort-control-item">
+            <div class="input-item">
                 <label for="inputLength">{"Input length"}</label>
                 <input id="inputLength"
                     type="number"
@@ -115,7 +115,7 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
                     oninput={change_input_len}
                 />
             </div>
-            <div class="sort-control-item">
+            <div class="input-item">
                 <label for="inputMin">{"Min"}</label>
                 <input id="inputMin"
                     type="number"
@@ -124,7 +124,7 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
                     oninput={change_min_val}
                 />
             </div>
-            <div class="sort-control-item">
+            <div class="input-item">
                 <label for="inputMax">{"Max"}</label>
                 <input id="inputMax"
                     type="number"
@@ -133,7 +133,7 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
                     oninput={change_max_val}
                 />
             </div>
-            <div class="sort-control-item">
+            <div class="input-item">
                 <label for="sortingAlgorithm">{"Algorithm"}</label>
                 <select id="sortingAlgorithm" name="Sorting algorithm" onchange={change_algorithm}>
                     { algorithm_options }
