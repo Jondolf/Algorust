@@ -1,7 +1,11 @@
+// std::time isn't supported on WASM platforms
+use instant::{Duration, Instant};
+
+use gloo_events::EventListener;
 use log::info;
 use wasm_bindgen::{JsCast, JsValue};
 
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
+use web_sys::{window, CanvasRenderingContext2d, HtmlCanvasElement};
 use yew::prelude::*;
 
 pub enum Msg {
@@ -17,6 +21,9 @@ pub struct SortGraph {
     canvas_ref: NodeRef,
     canvas: Option<HtmlCanvasElement>,
     ctx: Option<CanvasRenderingContext2d>,
+    resize_listener: Option<EventListener>,
+    /// Previous time when the graph was drawn. Used for limiting the drawing rate.
+    prev_draw: Instant,
 }
 
 impl Component for SortGraph {
@@ -28,6 +35,8 @@ impl Component for SortGraph {
             canvas_ref: NodeRef::default(),
             canvas: None,
             ctx: None,
+            resize_listener: None,
+            prev_draw: Instant::now(),
         }
     }
 
@@ -44,9 +53,16 @@ impl Component for SortGraph {
                         .dyn_into()
                         .unwrap(),
                 );
+
                 self.scale_canvas();
                 self.set_stroke_style("#adff2f");
-                self.draw_values(_ctx.props().values.to_owned());
+                self.draw_values(&_ctx.props().values);
+
+                let on_resize = _ctx.link().callback(|_e: Event| Msg::Resize);
+                let window = window().expect("couldn't get window");
+                let resize_listener =
+                    EventListener::new(&window, "resize", move |e| on_resize.emit(e.clone()));
+                self.resize_listener = Some(resize_listener);
             }
         }
     }
@@ -54,22 +70,20 @@ impl Component for SortGraph {
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::Resize => {
-                info!("Hi");
-                let canvas = self.canvas.as_ref().unwrap();
-                canvas.set_width(canvas.client_width() as u32);
-                canvas.set_height(canvas.client_height() as u32);
-                self.ctx
-                    .as_ref()
-                    .unwrap()
-                    .set_stroke_style(&JsValue::from_str("#adff2f"));
+                self.scale_canvas();
+                self.set_stroke_style("#adff2f");
+                self.draw_values(&_ctx.props().values);
                 true
             }
         }
     }
 
     fn changed(&mut self, _ctx: &Context<Self>) -> bool {
-        let values = _ctx.props().values.clone();
-        self.draw_values(values);
+        // Limit rate of redraws
+        if self.prev_draw.elapsed() > Duration::from_millis(60) {
+            self.draw_values(&_ctx.props().values);
+            self.prev_draw = Instant::now();
+        }
         true
     }
 
@@ -87,7 +101,7 @@ impl Component for SortGraph {
     }
 }
 impl SortGraph {
-    fn draw_values(&self, values: Vec<i32>) {
+    fn draw_values(&self, values: &[i32]) {
         let canvas = self.canvas.as_ref().unwrap();
         let ctx = self.ctx.as_ref().unwrap();
 
@@ -121,9 +135,7 @@ impl SortGraph {
         canvas.set_height(canvas.client_height() as u32);
     }
     fn set_stroke_style(&self, stroke_style: &str) {
-        self.ctx
-            .as_ref()
-            .unwrap()
-            .set_stroke_style(&JsValue::from_str(stroke_style));
+        let ctx = self.ctx.as_ref().unwrap();
+        ctx.set_stroke_style(&JsValue::from_str(stroke_style));
     }
 }
