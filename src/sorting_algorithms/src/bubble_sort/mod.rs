@@ -14,9 +14,9 @@ use crate::SortResult;
 /// let sorted = sort(&arr).arr;
 /// assert_eq!(target, sorted);
 /// ```
-pub fn sort<T: Clone + Ord>(items: Vec<T>) -> SortResult<T> {
+pub fn sort<T: Clone + Copy + Ord>(items: Vec<T>) -> SortResult<T> {
     let mut items = items.clone();
-    let mut steps: Vec<Vec<T>> = vec![];
+    let mut steps: Vec<Vec<T>> = vec![items.clone()];
     let start = instant::Instant::now();
     for i in 0..items.len() {
         let mut swapped = false;
@@ -32,5 +32,5 @@ pub fn sort<T: Clone + Ord>(items: Vec<T>) -> SortResult<T> {
         }
     }
     let duration = start.elapsed();
-    SortResult::new(items, Some(duration), steps)
+    SortResult::new_from_values(items, Some(duration), steps)
 }

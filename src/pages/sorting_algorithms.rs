@@ -8,7 +8,7 @@ use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct SortingAlgorithm<T: Clone> {
+pub struct SortingAlgorithm<T: Clone + Copy + PartialEq + PartialOrd> {
     pub name: &'static str,
     pub sort: fn(Vec<T>) -> SortResult<T>,
 }
@@ -56,7 +56,7 @@ pub struct SortingAlgorithms {
     input: Vec<i32>,
     output: SortResult<i32>,
     sort_config: SortConfig,
-    steps: Vec<Vec<i32>>,
+    steps: Vec<Step<i32>>,
     active_step_index: usize,
 }
 
@@ -95,10 +95,8 @@ impl Component for SortingAlgorithms {
             }
             Msg::ChangeActiveStep(res) => {
                 if let Ok(val) = res {
-                    if self.active_step_index != val {
-                        self.active_step_index = val;
-                        return true;
-                    }
+                    self.active_step_index = val;
+                    return true;
                 }
                 false
             }
@@ -113,6 +111,7 @@ impl Component for SortingAlgorithms {
             .collect::<Vec<String>>()
             .join(", ");
         let step_output_str = active_step
+            .values
             .iter()
             .map(|val| val.to_string())
             .collect::<Vec<String>>()
@@ -146,18 +145,18 @@ impl Component for SortingAlgorithms {
                 </Collapsible>
 
                 <Collapsible open={false} title={"Input graph"}>
-                    <SortGraph values={self.input.clone()} />
+                    <SortGraph step={Step::new(self.input.clone(), vec![])} />
                 </Collapsible>
 
                 <div class={classes!("sort-visualizations")}>
                     <h2>{ format!("Output ({} steps)", self.steps.len()) }</h2>
                     <p>{ sort_duration }</p>
 
-                    <label for="active-step-input">{ format!("Step: {}", self.active_step_index + 1) }</label>
+                    <label for="active-step-input">{ format!("Step: {}", self.active_step_index) }</label>
                     <input type="range" id="active-step-input" min="0" max={(self.steps.len() - 1).to_string()} value={self.active_step_index.to_string()} oninput={change_active_step} />
 
                     <Collapsible open={true} title={"Output graph"}>
-                        <SortGraph values={active_step.clone()} />
+                        <SortGraph step={active_step.clone()} />
                     </Collapsible>
 
                     <Collapsible open={true} title={"Output values"}>

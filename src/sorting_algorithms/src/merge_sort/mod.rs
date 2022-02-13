@@ -15,16 +15,28 @@ use crate::SortResult;
 /// assert_eq!(target, sorted);
 /// ```
 pub fn sort<T: Clone + Copy + PartialOrd>(items: Vec<T>) -> SortResult<T> {
-    let mut items = items.to_vec();
-    let mut steps: Vec<Vec<T>> = vec![items.clone()];
-    let step_count = (items.len() as f32).log(2.0).ceil() as usize;
+    let mut sorted_items = items.to_vec();
+    let item_count = sorted_items.len();
+
+    let mut steps: Vec<Vec<T>> = vec![];
+    let step_count = (sorted_items.len() as f32).log(2.0).ceil() as usize;
+
     for _ in 0..step_count {
-        steps.push(vec![]);
+        steps.push(Vec::with_capacity(item_count));
     }
+
     let start = instant::Instant::now();
-    items = merge_sort(items.clone(), &mut steps, 0);
+    sorted_items = merge_sort(sorted_items.clone(), &mut steps, 0);
     let duration = start.elapsed();
-    SortResult::new(items, Some(duration), steps)
+
+    // Add input as step 0
+    let steps = vec![items.clone()]
+        .iter()
+        .chain(&steps)
+        .map(|s| s.to_owned())
+        .collect();
+
+    SortResult::new_from_values(sorted_items, Some(duration), steps)
 }
 
 fn merge_sort<T: Copy + Clone + PartialOrd>(
