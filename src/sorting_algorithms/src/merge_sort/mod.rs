@@ -49,6 +49,8 @@ fn merge_sort<T: Copy + Clone + PartialOrd>(
         let left_half = merge_sort(items[0..middle].to_vec(), &mut steps, depth + 1);
         let right_half = merge_sort(items[middle..].to_vec(), &mut steps, depth + 1);
         items = merge(left_half, right_half);
+    }
+    if items.len() > 1 || (items.len() == 1 && depth != steps.len()) {
         let step_index = steps.len() - depth - 1;
         steps[step_index].extend(&items);
     }
