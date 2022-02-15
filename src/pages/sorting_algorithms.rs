@@ -117,7 +117,7 @@ impl Component for SortingAlgorithms {
             .collect::<Vec<String>>()
             .join(", ");
         let sort_duration = format!(
-            "Sort duration: {:?} ms",
+            "{:?} ms",
             match &self.output.duration {
                 Some(dur) => dur.as_millis(),
                 None => 0,
@@ -136,24 +136,23 @@ impl Component for SortingAlgorithms {
             <div id="SortingAlgorithms">
                 <h1>{"Sorting algorithms"}</h1>
 
+                <SortControls config={self.sort_config.clone()} {update_input} {update_config} />
+
+                <div class="content">
+                    <div class="input-container">
                 <h2>{"Input"}</h2>
 
-                <SortControls config={self.sort_config.clone()} {update_input} {update_config} />
+                        <Collapsible open={true} title={"Input graph"}>
+                            <SortGraph step={Step::new(self.input.clone(), vec![])} />
+                        </Collapsible>
 
                 <Collapsible open={true} title={"Input values"}>
                     <pre>{ input_str }</pre>
                 </Collapsible>
+                    </div>
 
-                <Collapsible open={false} title={"Input graph"}>
-                    <SortGraph step={Step::new(self.input.clone(), vec![])} />
-                </Collapsible>
-
-                <div class={classes!("sort-visualizations")}>
-                    <h2>{ format!("Output ({} steps)", self.steps.len()) }</h2>
-                    <p>{ sort_duration }</p>
-
-                    <label for="active-step-input">{ format!("Step: {}", self.active_step_index) }</label>
-                    <input type="range" id="active-step-input" min="0" max={(self.steps.len() - 1).to_string()} value={self.active_step_index.to_string()} oninput={change_active_step} />
+                    <div class="output-container">
+                        <h2>{ format!("Output ({} steps, {})", self.steps.len(), sort_duration) }</h2>
 
                     <Collapsible open={true} title={"Output graph"}>
                         <SortGraph step={active_step.clone()} />
@@ -162,6 +161,14 @@ impl Component for SortingAlgorithms {
                     <Collapsible open={true} title={"Output values"}>
                         <pre>{ step_output_str }</pre>
                     </Collapsible>
+
+                        <div class="step-selector">
+                            <label for="active-step-input">
+                                { format!("Step: {}", self.active_step_index) }
+                            </label>
+                            <input type="range" id="active-step-input" min="0" max={(self.steps.len() - 1).to_string()} value={self.active_step_index.to_string()} oninput={change_active_step} />
+                        </div>
+                    </div>
                 </div>
             </div>
         }

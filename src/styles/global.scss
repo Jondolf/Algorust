@@ -1,5 +1,15 @@
 @use "./sorting-algorithms.scss";
 
+::-webkit-scrollbar {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(200, 15%, 10%);
+  border: 0.3em solid hsl(200, 10%, 15%);
+  border-radius: 0.5em;
+}
+
 button,
 input,
 select {
