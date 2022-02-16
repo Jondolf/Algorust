@@ -15,9 +15,9 @@ pub enum Msg {
 
 #[derive(Properties, PartialEq)]
 pub struct SortGraphProps {
-    pub step: Step<i32>,
+    pub step: Step<u32>,
     #[prop_or(None)]
-    pub prev_step: Option<Step<i32>>,
+    pub prev_step: Option<Step<u32>>,
 }
 
 pub struct SortGraphConfig {
@@ -115,7 +115,7 @@ impl Component for SortGraph {
     }
 }
 impl SortGraph {
-    fn draw(&self, step: &Step<i32>) {
+    fn draw(&self, step: &Step<u32>) {
         let canvas = self.canvas.as_ref().unwrap();
         let ctx = self.ctx.as_ref().unwrap();
 
@@ -133,6 +133,8 @@ impl SortGraph {
         let unchanged_indices = (0..step.values.len())
             .filter(|i| !step.changed_indices.contains(i))
             .collect();
+
+        // TODO: Draw to canvas from js or draw image in Rust
 
         ctx.clear_rect(0.0, 0.0, canvas_width, canvas_height);
         ctx.set_line_width(width - margin);
@@ -158,8 +160,8 @@ impl SortGraph {
     fn draw_bars(
         &self,
         indices: Vec<usize>,
-        values: Vec<i32>,
-        max_val: i32,
+        values: Vec<u32>,
+        max_val: u32,
         width: f64,
         canvas_height: f64,
     ) {

@@ -1,13 +1,15 @@
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
-use crate::pages::sorting_algorithms::{SortConfig, SORTING_ALGORITHMS};
-use crate::utils::gen_i32_vec;
+use crate::{
+    pages::sorting_algorithms::{SortConfig, SORTING_ALGORITHMS},
+    utils::{gen_u32_vec, knuth_shuffle},
+};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct SortControlsProps {
     pub config: SortConfig,
-    pub update_input: Callback<Vec<i32>>,
+    pub update_input: Callback<Vec<u32>>,
     pub update_config: Callback<SortConfig>,
 }
 
@@ -29,11 +31,7 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
         let update_input = update_input.clone();
 
         move |_e: MouseEvent| {
-            update_input.emit(gen_i32_vec(
-                config.input_len,
-                config.min_val,
-                config.max_val,
-            ));
+            update_input.emit(knuth_shuffle(gen_u32_vec(config.input_len)));
         }
     };
     let change_input_len = {
@@ -49,36 +47,6 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
                         ..config.clone()
                     });
                 }
-            }
-        }
-    };
-    let change_min_val = {
-        let config = config.clone();
-        let update_config = update_config.clone();
-
-        move |e: InputEvent| {
-            let el: HtmlInputElement = e.target_unchecked_into();
-            if let Ok(min_val) = el.value().parse::<isize>() {
-                if min_val < config.max_val {
-                    update_config.emit(SortConfig {
-                        min_val,
-                        ..config.clone()
-                    });
-                }
-            }
-        }
-    };
-    let change_max_val = {
-        let config = config.clone();
-        let update_config = update_config.clone();
-
-        move |e: InputEvent| {
-            let el: HtmlInputElement = e.target_unchecked_into();
-            if let Ok(max_val) = el.value().parse::<isize>() {
-                update_config.emit(SortConfig {
-                    max_val,
-                    ..config.clone()
-                });
             }
         }
     };
@@ -113,24 +81,6 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
                     min=1
                     value={props.config.input_len.to_string()}
                     oninput={change_input_len}
-                />
-            </div>
-            <div class="input-item">
-                <label for="inputMin">{"Min"}</label>
-                <input id="inputMin"
-                    type="number"
-                    placeholder="Minimum value"
-                    value={props.config.min_val.to_string()}
-                    oninput={change_min_val}
-                />
-            </div>
-            <div class="input-item">
-                <label for="inputMax">{"Max"}</label>
-                <input id="inputMax"
-                    type="number"
-                    placeholder="Maximum value"
-                    value={props.config.max_val.to_string()}
-                    oninput={change_max_val}
                 />
             </div>
             <div class="input-item">

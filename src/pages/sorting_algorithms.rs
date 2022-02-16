@@ -1,7 +1,7 @@
-use crate::components::{
-    collapsible::Collapsible, sort_controls::SortControls, sort_graph::SortGraph,
+use crate::{
+    components::{collapsible::Collapsible, sort_controls::SortControls, sort_graph::SortGraph},
+    utils::{gen_u32_vec, knuth_shuffle},
 };
-use crate::utils::gen_i32_vec;
 use sorting_algorithms::*;
 use std::num::ParseIntError;
 use web_sys::HtmlInputElement;
@@ -13,7 +13,7 @@ pub struct SortingAlgorithm<T: Clone + Copy + PartialEq + PartialOrd> {
     pub sort: fn(Vec<T>) -> SortResult<T>,
 }
 
-pub const SORTING_ALGORITHMS: [SortingAlgorithm<i32>; 3] = [
+pub const SORTING_ALGORITHMS: [SortingAlgorithm<u32>; 3] = [
     SortingAlgorithm {
         name: "Bubble sort",
         sort: bubble_sort::sort,
@@ -29,7 +29,7 @@ pub const SORTING_ALGORITHMS: [SortingAlgorithm<i32>; 3] = [
 ];
 
 pub enum Msg {
-    UpdateInput(Vec<i32>),
+    UpdateInput(Vec<u32>),
     UpdateConfig(SortConfig),
     ChangeActiveStep(Result<usize, ParseIntError>),
 }
@@ -37,26 +37,22 @@ pub enum Msg {
 #[derive(Clone, Debug, PartialEq)]
 pub struct SortConfig {
     pub input_len: usize,
-    pub min_val: isize,
-    pub max_val: isize,
-    pub sorting_algorithm: SortingAlgorithm<i32>,
+    pub sorting_algorithm: SortingAlgorithm<u32>,
 }
 impl Default for SortConfig {
     fn default() -> Self {
         Self {
             input_len: 20,
-            min_val: 0,
-            max_val: 99,
             sorting_algorithm: SORTING_ALGORITHMS[0].clone(),
         }
     }
 }
 
 pub struct SortingAlgorithms {
-    input: Vec<i32>,
-    output: SortResult<i32>,
+    input: Vec<u32>,
+    output: SortResult<u32>,
     sort_config: SortConfig,
-    steps: Vec<Step<i32>>,
+    steps: Vec<Step<u32>>,
     active_step_index: usize,
 }
 
@@ -66,11 +62,7 @@ impl Component for SortingAlgorithms {
 
     fn create(_ctx: &Context<Self>) -> Self {
         let sort_config = SortConfig::default();
-        let input = gen_i32_vec(
-            sort_config.input_len,
-            sort_config.min_val,
-            sort_config.max_val,
-        );
+        let input = knuth_shuffle(gen_u32_vec(sort_config.input_len));
         let output = (sort_config.sorting_algorithm.sort)(input.clone());
         let active_step = output.steps.len() - 1;
         SortingAlgorithms {
@@ -104,18 +96,6 @@ impl Component for SortingAlgorithms {
     }
     fn view(&self, ctx: &Context<Self>) -> Html {
         let active_step = &self.steps[self.active_step_index];
-        let input_str = &self
-            .input
-            .iter()
-            .map(|val| val.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
-        let step_output_str = active_step
-            .values
-            .iter()
-            .map(|val| val.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
         let sort_duration = format!(
             "{:?} ms",
             match &self.output.duration {
@@ -145,21 +125,13 @@ impl Component for SortingAlgorithms {
                         <Collapsible open={true} title={"Input graph"}>
                             <SortGraph step={Step::new(self.input.clone(), vec![])} />
                         </Collapsible>
-
-                <Collapsible open={true} title={"Input values"}>
-                    <pre>{ input_str }</pre>
-                </Collapsible>
                     </div>
 
                     <div class="output-container">
-                        <h2>{ format!("Output ({} steps, {})", self.steps.len(), sort_duration) }</h2>
+                        <h2>{ format!("Output ({} steps, {})", self.steps.len() - 1, sort_duration) }</h2>
 
                     <Collapsible open={true} title={"Output graph"}>
                         <SortGraph step={active_step.clone()} />
-                    </Collapsible>
-
-                    <Collapsible open={true} title={"Output values"}>
-                        <pre>{ step_output_str }</pre>
                     </Collapsible>
 
                         <div class="step-selector">
@@ -177,7 +149,7 @@ impl Component for SortingAlgorithms {
 
 impl SortingAlgorithms {
     fn update_values(&mut self) {
-        self.input = self.generate_values();
+        self.input = knuth_shuffle(gen_u32_vec(self.sort_config.input_len));
         let output = (self.sort_config.sorting_algorithm.sort)(self.input.clone());
         self.output = SortResult::new(output.value, output.duration, output.steps.clone());
         self.steps = output.steps;
@@ -185,13 +157,5 @@ impl SortingAlgorithms {
         if self.active_step_index >= self.steps.len() {
             self.active_step_index = self.steps.len() - 1;
         }
-    }
-
-    fn generate_values(&self) -> Vec<i32> {
-        gen_i32_vec(
-            self.sort_config.input_len,
-            self.sort_config.min_val,
-            self.sort_config.max_val,
-        )
     }
 }
