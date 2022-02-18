@@ -1,4 +1,6 @@
-use crate::SortResult;
+use std::fmt::Debug;
+
+use crate::{SortCommand, SortResult};
 
 /// # Merge sort
 ///
@@ -10,54 +12,40 @@ use crate::SortResult;
 /// use sorting_algorithms::{merge_sort::sort, SortResult};
 ///
 /// let items = vec![6, 4, 0, 9, 3, 5, 8, 1];
-/// let target = vec![0, 1, 3, 4, 5, 6, 8, 9];
-/// let sorted = sort(&items).items;
-/// assert_eq!(target, sorted);
+/// assert_eq!(sort(items).output, vec![0, 1, 3, 4, 5, 6, 8, 9]);
 /// ```
-pub fn sort<T: Clone + Copy + PartialOrd>(items: Vec<T>) -> SortResult<T> {
+pub fn sort<T: Clone + Copy + Debug + PartialOrd>(items: Vec<T>) -> SortResult<T> {
+    wasm_logger::init(wasm_logger::Config::default());
     let mut sorted_items = items.to_vec();
-    let item_count = sorted_items.len();
-
-    let mut steps: Vec<Vec<T>> = vec![];
-    let step_count = (sorted_items.len() as f32).log(2.0).ceil() as usize;
-
-    for _ in 0..step_count {
-        steps.push(Vec::with_capacity(item_count));
-    }
+    let mut steps: Vec<Vec<SortCommand<T>>> = vec![];
 
     let start = instant::Instant::now();
     sorted_items = merge_sort(sorted_items.clone(), &mut steps, 0);
     let duration = start.elapsed();
 
-    // Add input as step 0
-    let steps = vec![items.clone()]
-        .iter()
-        .chain(&steps)
-        .map(|s| s.to_owned())
-        .collect();
-
-    SortResult::new_from_values(sorted_items, Some(duration), steps)
+    SortResult::new(sorted_items, Some(duration), steps)
 }
 
-fn merge_sort<T: Copy + Clone + PartialOrd>(
+fn merge_sort<T: Copy + Clone + Debug + PartialOrd>(
     mut items: Vec<T>,
-    mut steps: &mut Vec<Vec<T>>,
-    depth: usize,
+    mut steps: &mut Vec<Vec<SortCommand<T>>>,
+    start_i: usize,
 ) -> Vec<T> {
     if items.len() > 1 {
         let middle = items.len() / 2;
-        let left_half = merge_sort(items[0..middle].to_vec(), &mut steps, depth + 1);
-        let right_half = merge_sort(items[middle..].to_vec(), &mut steps, depth + 1);
-        items = merge(left_half, right_half);
-    }
-    if items.len() > 1 || (items.len() == 1 && depth != steps.len()) {
-        let step_index = steps.len() - depth - 1;
-        steps[step_index].extend(&items);
+        let left_half = merge_sort(items[0..middle].to_vec(), &mut steps, start_i);
+        let right_half = merge_sort(items[middle..].to_vec(), &mut steps, start_i + middle);
+        items = merge(left_half, right_half, &mut steps, start_i);
     }
     items
 }
 
-fn merge<T: Copy + Clone + PartialOrd>(a: Vec<T>, b: Vec<T>) -> Vec<T> {
+fn merge<T: Copy + Clone + Debug + PartialOrd>(
+    a: Vec<T>,
+    b: Vec<T>,
+    steps: &mut Vec<Vec<SortCommand<T>>>,
+    start_i: usize,
+) -> Vec<T> {
     let size = a.len() + b.len();
     let mut merged: Vec<T> = Vec::with_capacity(size);
 
@@ -68,9 +56,11 @@ fn merge<T: Copy + Clone + PartialOrd>(a: Vec<T>, b: Vec<T>) -> Vec<T> {
     while i < a.len() && j < b.len() {
         if a[i] < b[j] {
             merged.push(a[i]);
+            steps.push(vec![SortCommand::Set(start_i + merged.len() - 1, a[i])]);
             i += 1;
         } else {
             merged.push(b[j]);
+            steps.push(vec![SortCommand::Set(start_i + merged.len() - 1, b[j])]); //1,0
             j += 1;
         }
     }
@@ -78,10 +68,12 @@ fn merge<T: Copy + Clone + PartialOrd>(a: Vec<T>, b: Vec<T>) -> Vec<T> {
     // Add all remaining values
     while i < a.len() {
         merged.push(a[i]);
+        steps.push(vec![SortCommand::Set(start_i + merged.len() - 1, a[i])]);
         i += 1;
     }
     while j < b.len() {
         merged.push(b[j]);
+        steps.push(vec![SortCommand::Set(start_i + merged.len() - 1, b[j])]);
         j += 1;
     }
 

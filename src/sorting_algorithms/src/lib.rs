@@ -1,61 +1,59 @@
 use std::time::Duration;
-
 pub mod bubble_sort;
 pub mod insertion_sort;
 pub mod merge_sort;
 
-#[derive(Clone, PartialEq)]
-pub struct SortResult<T: Clone + Copy + PartialEq + PartialOrd> {
-    pub value: Vec<T>,
-    pub duration: Option<Duration>,
-    pub steps: Vec<Step<T>>,
+/// A command used when sorting a collection in steps.
+///
+/// ## Example
+///
+/// You can run steps of `SortCommand`s with `run_sort_steps`.
+///
+/// ```rust
+/// use sorting_algorithms::{SortCommand, run_sort_steps};
+///
+/// let mut items: Vec<u32> = vec![3, 4, 1];
+/// let steps: Vec<Vec<SortCommand<u32>>> = vec![
+///     vec![SortCommand::Swap(0, 2)], // Swap 3 and 1
+///     vec![SortCommand::Set(1, 2)], // Set 4 to 2
+/// ];
+///
+/// run_sort_steps(&mut items, steps);
+///
+/// assert_eq!(items, vec![1, 2, 3]);
+/// ```
+#[derive(Clone, Debug, PartialEq)]
+pub enum SortCommand<T> {
+    /// Swap items in a collection by index: `(from_index, to_index)`
+    Swap(usize, usize),
+    /// Set the value of an item in a collection by index: `(index, value)`
+    Set(usize, T),
 }
 
-impl<T: Clone + Copy + PartialEq + PartialOrd> SortResult<T> {
-    /// Creates a new `SortResult` from a vector of `Step` structs.
-    pub fn new(value: Vec<T>, duration: Option<Duration>, steps: Vec<Step<T>>) -> Self {
-        Self {
-            value,
-            duration,
-            steps,
-        }
-    }
-    /// Creates a new `SortResult` from a `Vec<Vec<T>>` instead of a vector of `Step` structs.
-    pub fn new_from_values(value: Vec<T>, duration: Option<Duration>, steps: Vec<Vec<T>>) -> Self {
-        let mut arr: Vec<Step<T>> = vec![];
-        for (i, values) in steps.iter().enumerate() {
-            let prev_values: Vec<T> = if i == 0 {
-                vec![]
-            } else {
-                steps[i - 1].to_owned()
-            };
-            arr.push(Step::new(values.to_vec(), prev_values));
-        }
-        Self {
-            value,
-            duration,
-            steps: arr,
-        }
-    }
-}
-
-#[derive(Clone, PartialEq)]
-pub struct Step<T: Clone + Copy + PartialEq + PartialOrd> {
-    pub values: Vec<T>,
-    /// Indices of values that have changed from the previous step
-    pub changed_indices: Vec<usize>,
-}
-impl<T: Clone + Copy + PartialEq + PartialOrd> Step<T> {
-    pub fn new(values: Vec<T>, prev_values: Vec<T>) -> Self {
-        let mut changed_indices: Vec<usize> = vec![];
-        for i in 0..values.len() {
-            if i < prev_values.len() && values[i] != prev_values[i] {
-                changed_indices.push(i);
+/// Runs given sorting operations on a vector of type T.
+pub fn run_sort_steps<T: Clone>(items: &mut Vec<T>, steps: Vec<Vec<SortCommand<T>>>) {
+    for step in steps {
+        for command in step {
+            match command {
+                SortCommand::Swap(from, to) => items.swap(from, to),
+                SortCommand::Set(index, value) => items[index] = value,
             }
         }
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub struct SortResult<T: Clone + Copy + PartialEq + PartialOrd> {
+    pub output: Vec<T>,
+    pub duration: Option<Duration>,
+    pub steps: Vec<Vec<SortCommand<T>>>,
+}
+impl<T: Clone + Copy + PartialEq + PartialOrd> SortResult<T> {
+    pub fn new(value: Vec<T>, duration: Option<Duration>, steps: Vec<Vec<SortCommand<T>>>) -> Self {
         Self {
-            values,
-            changed_indices,
+            output: value,
+            duration,
+            steps,
         }
     }
 }

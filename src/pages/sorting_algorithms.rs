@@ -42,7 +42,7 @@ pub struct SortConfig {
 impl Default for SortConfig {
     fn default() -> Self {
         Self {
-            input_len: 20,
+            input_len: 50,
             sorting_algorithm: SORTING_ALGORITHMS[0].clone(),
         }
     }
@@ -52,7 +52,7 @@ pub struct SortingAlgorithms {
     input: Vec<u32>,
     output: SortResult<u32>,
     sort_config: SortConfig,
-    steps: Vec<Step<u32>>,
+    steps: Vec<Vec<SortCommand<u32>>>,
     active_step_index: usize,
 }
 
@@ -67,7 +67,7 @@ impl Component for SortingAlgorithms {
         let active_step = output.steps.len() - 1;
         SortingAlgorithms {
             input,
-            output: SortResult::new(output.value, output.duration, output.steps.clone()),
+            output: SortResult::new(output.output, output.duration, output.steps.clone()),
             sort_config,
             steps: output.steps,
             active_step_index: active_step,
@@ -95,7 +95,10 @@ impl Component for SortingAlgorithms {
         }
     }
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let active_step = &self.steps[self.active_step_index];
+        let active_step = (&self.steps[0..=self.active_step_index]).to_vec();
+        let mut active_step_output = self.input.clone();
+        run_sort_steps(&mut active_step_output, active_step);
+
         let sort_duration = format!(
             "{:?} ms",
             match &self.output.duration {
@@ -123,7 +126,7 @@ impl Component for SortingAlgorithms {
                 <h2>{"Input"}</h2>
 
                         <Collapsible open={true} title={"Input graph"}>
-                            <SortGraph step={Step::new(self.input.clone(), vec![])} />
+                            <SortGraph items={self.input.clone()} />
                         </Collapsible>
                     </div>
 
@@ -131,7 +134,7 @@ impl Component for SortingAlgorithms {
                         <h2>{ format!("Output ({} steps, {})", self.steps.len() - 1, sort_duration) }</h2>
 
                     <Collapsible open={true} title={"Output graph"}>
-                        <SortGraph step={active_step.clone()} />
+                            <SortGraph items={active_step_output} step={self.steps[self.active_step_index].clone()} />
                     </Collapsible>
 
                         <div class="step-selector">
@@ -151,7 +154,7 @@ impl SortingAlgorithms {
     fn update_values(&mut self) {
         self.input = knuth_shuffle(gen_u32_vec(self.sort_config.input_len));
         let output = (self.sort_config.sorting_algorithm.sort)(self.input.clone());
-        self.output = SortResult::new(output.value, output.duration, output.steps.clone());
+        self.output = SortResult::new(output.output, output.duration, output.steps.clone());
         self.steps = output.steps;
 
         if self.active_step_index >= self.steps.len() {

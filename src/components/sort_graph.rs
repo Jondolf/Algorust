@@ -3,7 +3,7 @@ use instant::{Duration, Instant};
 
 use gloo_events::EventListener;
 use log::info;
-use sorting_algorithms::Step;
+use sorting_algorithms::SortCommand;
 use wasm_bindgen::{JsCast, JsValue};
 
 use web_sys::{window, CanvasRenderingContext2d, HtmlCanvasElement};
@@ -15,9 +15,11 @@ pub enum Msg {
 
 #[derive(Properties, PartialEq)]
 pub struct SortGraphProps {
-    pub step: Step<u32>,
+    pub items: Vec<u32>,
+    #[prop_or(vec![])]
+    pub step: Vec<SortCommand<u32>>,
     #[prop_or(None)]
-    pub prev_step: Option<Step<u32>>,
+    pub prev_step: Option<Vec<SortCommand<u32>>>,
 }
 
 pub struct SortGraphConfig {
@@ -70,7 +72,7 @@ impl Component for SortGraph {
                 );
 
                 self.scale_canvas();
-                self.draw(&_ctx.props().step);
+                self.draw(&_ctx.props().items, &_ctx.props().step);
 
                 let on_resize = _ctx.link().callback(|_e: Event| Msg::Resize);
                 let window = window().expect("couldn't get window");
@@ -85,7 +87,7 @@ impl Component for SortGraph {
         match msg {
             Msg::Resize => {
                 self.scale_canvas();
-                self.draw(&_ctx.props().step);
+                self.draw(&_ctx.props().items, &_ctx.props().step);
                 true
             }
         }
@@ -95,7 +97,7 @@ impl Component for SortGraph {
         // Limit rate of redraws
         // TODO: This doesn't call itself after the time is elapsed.
         if self.prev_draw.elapsed() > self.config.update_rate {
-            self.draw(&_ctx.props().step);
+            self.draw(&_ctx.props().items, &_ctx.props().step);
             self.prev_draw = Instant::now();
         }
         true
@@ -115,23 +117,28 @@ impl Component for SortGraph {
     }
 }
 impl SortGraph {
-    fn draw(&self, step: &Step<u32>) {
+    fn draw(&self, items: &Vec<u32>, step: &Vec<SortCommand<u32>>) {
         let canvas = self.canvas.as_ref().unwrap();
         let ctx = self.ctx.as_ref().unwrap();
 
         let canvas_width = canvas.width() as f64;
         let canvas_height = canvas.height() as f64;
-        let max_val = match step.values.iter().max() {
+        let max_val = match items.iter().max() {
             Some(val) => *val,
             None => 0,
         };
-        let width = canvas_width / step.values.len() as f64;
+        let width = canvas_width / items.len() as f64;
         let margin = width * 0.1;
         // Remove margin when it's small enough to avoid problem where some bars have a tiny margin and some don't.
         let margin = if margin < 0.5 { 0.0 } else { margin };
 
-        let unchanged_indices = (0..step.values.len())
-            .filter(|i| !step.changed_indices.contains(i))
+        let unchanged_indices = (0..items.len())
+            .filter(|i| {
+                !step.iter().any(|command| match command {
+                    SortCommand::Swap(from, to) => from == i || to == i,
+                    SortCommand::Set(index, _) => index == i,
+                })
+            })
             .collect();
 
         // TODO: Draw to canvas from js or draw image in Rust
@@ -142,7 +149,7 @@ impl SortGraph {
         self.set_stroke_style(&self.config.color_unchanged);
         self.draw_bars(
             unchanged_indices,
-            step.values.clone(),
+            items.clone(),
             max_val,
             width,
             canvas_height,
@@ -150,8 +157,15 @@ impl SortGraph {
 
         self.set_stroke_style(&self.config.color_changed);
         self.draw_bars(
-            step.changed_indices.clone(),
-            step.values.clone(),
+            step.iter()
+                .map(|command| match command.to_owned() {
+                    SortCommand::Swap(from, to) => vec![from, to],
+                    SortCommand::Set(index, _) => vec![index],
+                })
+                .collect::<Vec<Vec<usize>>>()
+                .concat()
+                .clone(),
+            items.clone(),
             max_val,
             width,
             canvas_height,
