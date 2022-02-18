@@ -15,7 +15,6 @@ use crate::{SortCommand, SortResult};
 /// assert_eq!(sort(items).output, vec![0, 1, 3, 4, 5, 6, 8, 9]);
 /// ```
 pub fn sort<T: Clone + Copy + Debug + PartialOrd>(items: Vec<T>) -> SortResult<T> {
-    wasm_logger::init(wasm_logger::Config::default());
     let mut sorted_items = items.to_vec();
     let mut steps: Vec<Vec<SortCommand<T>>> = vec![];
 
