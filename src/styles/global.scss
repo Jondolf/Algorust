@@ -24,6 +24,23 @@ select {
   margin-right: 1rem;
   margin-bottom: 1rem;
 
+  &.checkbox {
+    display: flex;
+    align-items: center;
+
+    input {
+      display: inline-block;
+      margin-right: 0.5rem;
+      height: 100%;
+    }
+    label {
+      position: static;
+      display: inline-flex;
+      align-items: center;
+      height: 100%;
+    }
+  }
+
   button {
     display: flex;
     justify-content: center;
@@ -50,6 +67,8 @@ select {
     left: 0.5rem;
     font-size: 0.75em;
     color: #adff2fbb;
+    cursor: default;
+    user-select: none;
   }
 
   input,

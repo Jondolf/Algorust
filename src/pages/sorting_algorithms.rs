@@ -30,7 +30,8 @@ pub const SORTING_ALGORITHMS: [SortingAlgorithm<u32>; 3] = [
 
 pub enum Msg {
     UpdateInput(Vec<u32>),
-    UpdateConfig(SortConfig),
+    /// Receives a new config and a boolean that controls if the change causes a rerender.
+    UpdateConfig(SortConfig, bool),
     ChangeActiveStep(Result<usize, ParseIntError>),
 }
 
@@ -38,12 +39,14 @@ pub enum Msg {
 pub struct SortConfig {
     pub input_len: usize,
     pub sorting_algorithm: SortingAlgorithm<u32>,
+    pub audio_enabled: bool,
 }
 impl Default for SortConfig {
     fn default() -> Self {
         Self {
-            input_len: 50,
+            input_len: 100,
             sorting_algorithm: SORTING_ALGORITHMS[0].clone(),
+            audio_enabled: true,
         }
     }
 }
@@ -80,10 +83,12 @@ impl Component for SortingAlgorithms {
                 self.update_values();
                 true
             }
-            Msg::UpdateConfig(val) => {
+            Msg::UpdateConfig(val, rerender) => {
                 self.sort_config = val;
+                if rerender {
                 self.update_values();
-                true
+                }
+                rerender
             }
             Msg::ChangeActiveStep(res) => {
                 if let Ok(val) = res {
@@ -110,10 +115,10 @@ impl Component for SortingAlgorithms {
             let el: HtmlInputElement = e.target_unchecked_into();
             Msg::ChangeActiveStep(el.value().parse::<usize>())
         });
-        let update_input = ctx.link().callback(|val| Msg::UpdateInput(val));
+        let update_input = ctx.link().callback(Msg::UpdateInput);
         let update_config = ctx
             .link()
-            .callback(|val: SortConfig| Msg::UpdateConfig(val));
+            .callback(|msg: (SortConfig, bool)| Msg::UpdateConfig(msg.0, msg.1));
 
         html! {
             <div id="SortingAlgorithms">
@@ -134,7 +139,7 @@ impl Component for SortingAlgorithms {
                         <h2>{ format!("Output ({} steps, {})", self.steps.len() - 1, sort_duration) }</h2>
 
                     <Collapsible open={true} title={"Output graph"}>
-                            <SortGraph items={active_step_output} step={self.steps[self.active_step_index].clone()} />
+                                <SortGraph items={active_step_output} step={self.steps[self.active_step_index].clone()} audio_enabled={self.sort_config.audio_enabled} />
                     </Collapsible>
 
                         <div class="step-selector">

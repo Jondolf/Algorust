@@ -1,3 +1,5 @@
+pub mod audio;
+
 use rand::{thread_rng, Rng};
 
 pub fn gen_u32_vec(len: usize) -> Vec<u32> {

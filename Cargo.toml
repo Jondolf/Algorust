@@ -6,9 +6,9 @@ edition = "2018"
 [dependencies]
 yew = "0.19.3"
 yew-router = "0.16.0"
+yew-hooks = "0.1.33"
 gloo-events = "0.1.1"
 wasm-bindgen = "0.2.79"
-web-sys = { version = "0.3.56", features = ["HtmlCanvasElement", "CanvasRenderingContext2d"] }
 wasm-logger = "0.2.0"
 instant = "0.1.12"
 log = "0.4.14"
@@ -17,3 +17,18 @@ getrandom = { version = "0.2.3", features = ["js"] }
 
 [dependencies.sorting_algorithms]
 path = "./src/sorting_algorithms"
+
+[dependencies.web-sys]
+version = "0.3.56"
+features = [
+  "HtmlCanvasElement",
+  "CanvasRenderingContext2d",
+  'AudioContext',
+  'AudioDestinationNode',
+  'AudioNode',
+  'AudioParam',
+  'DynamicsCompressorNode',
+  'GainNode',
+  'OscillatorNode',
+  'OscillatorType',
+]

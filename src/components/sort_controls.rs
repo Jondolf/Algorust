@@ -10,7 +10,7 @@ use crate::{
 pub struct SortControlsProps {
     pub config: SortConfig,
     pub update_input: Callback<Vec<u32>>,
-    pub update_config: Callback<SortConfig>,
+    pub update_config: Callback<(SortConfig, bool)>,
 }
 
 #[function_component(SortControls)]
@@ -28,7 +28,6 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
 
     let gen_input = {
         let config = config.clone();
-        let update_input = update_input.clone();
 
         move |_e: MouseEvent| {
             update_input.emit(knuth_shuffle(gen_u32_vec(config.input_len)));
@@ -42,10 +41,13 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
             let el: HtmlInputElement = e.target_unchecked_into();
             if let Ok(input_len) = el.value().parse::<usize>() {
                 if input_len > 1 {
-                    update_config.emit(SortConfig {
-                        input_len,
-                        ..config.clone()
-                    });
+                    update_config.emit((
+                        SortConfig {
+                            input_len,
+                            ..config.clone()
+                        },
+                        true,
+                    ));
                 }
             }
         }
@@ -61,10 +63,26 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
                 .find(|algorithm| algorithm.name == el.value())
                 .unwrap()
                 .clone();
-            update_config.emit(SortConfig {
-                sorting_algorithm,
-                ..config
-            });
+            update_config.emit((
+                SortConfig {
+                    sorting_algorithm,
+                    ..config
+                },
+                true,
+            ));
+        }
+    };
+    let toggle_audio = {
+        let config = config.clone();
+
+        move |_| {
+            update_config.emit((
+                SortConfig {
+                    audio_enabled: !config.audio_enabled,
+                    ..config.clone()
+                },
+                false,
+            ));
         }
     };
 
@@ -88,6 +106,10 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
                 <select id="sortingAlgorithm" name="Sorting algorithm" onchange={change_algorithm}>
                     { algorithm_options }
                 </select>
+            </div>
+            <div class="input-item checkbox">
+                <input id="audioEnabled" type="checkbox" checked={config.audio_enabled} onchange={toggle_audio} />
+                <label for="audioEnabled">{"Audio enabled"}</label>
             </div>
         </div>
     }
