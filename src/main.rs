@@ -4,19 +4,31 @@ mod components;
 mod pages;
 mod utils;
 
-use pages::sorting_algorithms::SortingAlgorithms;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-#[derive(Clone, Routable, PartialEq)]
+#[derive(Clone, Debug, Routable, PartialEq)]
 enum Route {
     #[at("/")]
+    Home,
+    #[at("/sorting-algorithms")]
     SortingAlgorithms,
+    // Without this, subroutes don't seem to be recognized even though they are defined in pages::sorting_algorithms
+    #[at("/sorting-algorithms/:algorithm")]
+    SortingAlgorithm,
 }
 
 fn switch(routes: &Route) -> Html {
     match routes {
-        Route::SortingAlgorithms => html! { <SortingAlgorithms /> },
+        Route::Home => html! {
+            <Redirect<Route> to={Route::SortingAlgorithms} />
+        },
+        Route::SortingAlgorithms => html! {
+            <Switch<pages::sorting_algorithms::SortingAlgorithmsRoute> render={Switch::render(pages::sorting_algorithms::switch_sorting_algorithms)} />
+        },
+        Route::SortingAlgorithm => html! {
+            <Switch<pages::sorting_algorithms::SortingAlgorithmsRoute> render={Switch::render(pages::sorting_algorithms::switch_sorting_algorithms)} />
+        },
     }
 }
 

@@ -1,8 +1,9 @@
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
+use yew_router::{history::History, hooks::use_history};
 
 use crate::{
-    pages::sorting_algorithms::{SortConfig, SORTING_ALGORITHMS},
+    pages::sorting_algorithms::{sorting_algorithms, SortConfig, SortingAlgorithmsRoute},
     utils::{gen_u32_vec, knuth_shuffle},
 };
 
@@ -21,9 +22,11 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
         update_config,
     } = props.clone();
 
-    let algorithm_options = SORTING_ALGORITHMS
-        .iter()
-        .map(|a| view_sorting_algorithm_option(config.sorting_algorithm.name, a.name))
+    let history = use_history().unwrap();
+
+    let algorithm_options = sorting_algorithms()
+        .values()
+        .map(|a| view_sorting_algorithm_option(&config.sorting_algorithm.name, &a.name))
         .collect::<Html>();
 
     let gen_input = {
@@ -52,25 +55,11 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
             }
         }
     };
-    let change_algorithm = {
-        let config = config.clone();
-        let update_config = update_config.clone();
-
-        move |e: Event| {
-            let el: HtmlInputElement = e.target_unchecked_into();
-            let sorting_algorithm = SORTING_ALGORITHMS
-                .iter()
-                .find(|algorithm| algorithm.name == el.value())
-                .unwrap()
-                .clone();
-            update_config.emit((
-                SortConfig {
-                    sorting_algorithm,
-                    ..config
-                },
-                true,
-            ));
-        }
+    let change_algorithm = move |e: Event| {
+        let el: HtmlInputElement = e.target_unchecked_into();
+        history.push(SortingAlgorithmsRoute::SortingAlgorithm {
+            algorithm: el.value().replace(" ", "-").to_lowercase(),
+        });
     };
     let toggle_audio = {
         let config = config.clone();
@@ -117,6 +106,6 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
 
 fn view_sorting_algorithm_option(curr_algorithm: &str, name: &str) -> Html {
     html! {
-        <option value={name.to_string()} selected={curr_algorithm == name}>{name}</option>
+        <option key={name.to_string()} value={name.to_string()} selected={curr_algorithm == name}>{name}</option>
     }
 }

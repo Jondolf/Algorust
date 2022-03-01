@@ -8,22 +8,14 @@ h1 {
 }
 
 .content {
-  display: flex;
-  flex-direction: row;
-  gap: 1em;
   width: 100%;
+  background: hsl(200, 15%, 12%);
+  padding: 1em;
+  border-radius: 1em;
+  box-sizing: border-box;
 
-  .input-container,
-  .output-container {
-    width: 50%;
-    background: hsl(200, 15%, 12%);
-    padding: 1em;
-    border-radius: 1em;
-    box-sizing: border-box;
-
-    :first-child {
-      margin-top: 0;
-    }
+  :first-child {
+    margin-top: 0;
   }
 }
 

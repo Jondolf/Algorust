@@ -107,6 +107,26 @@ pre {
   white-space: normal;
 }
 
+table {
+  border-collapse: collapse;
+  border: 1px solid gray;
+
+  th,
+  td {
+    border: 1px solid gray;
+    padding: 0.5rem;
+  }
+}
+
+.algorithm-description {
+  width: 100%;
+  padding: 1em;
+  margin-top: 1em;
+  background: hsl(200, 15%, 12%);
+  border-radius: 1em;
+  box-sizing: border-box;
+}
+
 @media only screen and (max-width: 600px) {
   body {
     font-size: 0.8em;

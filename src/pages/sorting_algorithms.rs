@@ -1,32 +1,99 @@
 use crate::{
-    components::{collapsible::Collapsible, sort_controls::SortControls, sort_graph::SortGraph},
+    components::sorting_algorithms::{
+        sort_controls::SortControls, sort_desc::SortDesc, sort_graph::SortGraph,
+    },
     utils::{gen_u32_vec, knuth_shuffle},
 };
 use sorting_algorithms::*;
-use std::num::ParseIntError;
-use web_sys::HtmlInputElement;
+use std::{collections::BTreeMap, num::ParseIntError};
+use web_sys::{window, HtmlInputElement};
 use yew::prelude::*;
+use yew_router::{prelude::*, scope_ext::HistoryHandle};
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct SortingAlgorithm<T: Clone + Copy + PartialEq + PartialOrd> {
-    pub name: &'static str,
-    pub sort: fn(Vec<T>) -> SortResult<T>,
+pub struct SortingAlgorithm {
+    pub name: String,
+    pub run: fn(Vec<u32>) -> SortResult<u32>,
+}
+impl SortingAlgorithm {
+    fn new(name: &str, run: fn(Vec<u32>) -> SortResult<u32>) -> Self {
+        Self {
+            name: name.to_string(),
+            run,
+        }
+    }
+}
+impl Default for SortingAlgorithm {
+    fn default() -> Self {
+        Self {
+            name: String::from("Bubble sort"),
+            run: bubble_sort::sort,
+        }
+    }
 }
 
-pub const SORTING_ALGORITHMS: [SortingAlgorithm<u32>; 3] = [
-    SortingAlgorithm {
-        name: "Bubble sort",
-        sort: bubble_sort::sort,
-    },
-    SortingAlgorithm {
-        name: "Insertion sort",
-        sort: insertion_sort::sort,
-    },
-    SortingAlgorithm {
-        name: "Merge sort",
-        sort: merge_sort::sort,
-    },
-];
+pub fn sorting_algorithms() -> BTreeMap<&'static str, SortingAlgorithm> {
+    // `BTreeMap` because it keeps the order of the items.
+    BTreeMap::from([
+        (
+            "bubble-sort",
+            SortingAlgorithm::new("Bubble sort", bubble_sort::sort),
+        ),
+        (
+            "insertion-sort",
+            SortingAlgorithm::new("Insertion sort", insertion_sort::sort),
+        ),
+        (
+            "merge-sort",
+            SortingAlgorithm::new("Merge sort", merge_sort::sort),
+        ),
+    ])
+}
+
+#[derive(Clone, Debug, Routable, PartialEq)]
+pub enum SortingAlgorithmsRoute {
+    #[at("/sorting-algorithms")]
+    SortingAlgorithms,
+    #[at("/sorting-algorithms/:algorithm")]
+    SortingAlgorithm { algorithm: String },
+}
+
+pub fn switch_sorting_algorithms(route: &SortingAlgorithmsRoute) -> Html {
+    match route {
+        SortingAlgorithmsRoute::SortingAlgorithms => html! {
+            <Redirect<SortingAlgorithmsRoute> to={SortingAlgorithmsRoute::SortingAlgorithm {algorithm: "bubble-sort".to_string()}} />
+        },
+        SortingAlgorithmsRoute::SortingAlgorithm { algorithm } => {
+            if sorting_algorithms().contains_key(algorithm.as_str()) {
+                html! {
+                    <SortingAlgorithms algorithm={algorithm.to_string()} />
+                }
+            } else {
+                html! {
+                    <SortingAlgorithms404 algorithm={algorithm.to_string()} />
+                }
+            }
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Properties)]
+struct SortingAlgorithms404Props {
+    algorithm: String,
+}
+
+#[function_component(SortingAlgorithms404)]
+fn sorting_algorithms_404(props: &SortingAlgorithms404Props) -> Html {
+    html! {
+        <>
+            <h1>{ "404" }</h1>
+            <p>{ format!("The algorithm \"{}\" was not found.", props.algorithm) }</p>
+            <Link<SortingAlgorithmsRoute> to={SortingAlgorithmsRoute::SortingAlgorithms}>
+                { "Back to sorting algorithms" }
+            </Link<SortingAlgorithmsRoute>>
+        </>
+    }
+}
 
 pub enum Msg {
     UpdateInput(Vec<u32>),
@@ -38,17 +105,23 @@ pub enum Msg {
 #[derive(Clone, Debug, PartialEq)]
 pub struct SortConfig {
     pub input_len: usize,
-    pub sorting_algorithm: SortingAlgorithm<u32>,
+    pub sorting_algorithm: SortingAlgorithm,
     pub audio_enabled: bool,
 }
 impl Default for SortConfig {
     fn default() -> Self {
         Self {
             input_len: 100,
-            sorting_algorithm: SORTING_ALGORITHMS[0].clone(),
+            sorting_algorithm: SortingAlgorithm::default(),
             audio_enabled: true,
         }
     }
+}
+
+#[derive(Properties, Clone, PartialEq)]
+pub struct SortingAlgorithmsProps {
+    #[prop_or("bubble-sort".to_string())]
+    pub algorithm: String,
 }
 
 pub struct SortingAlgorithms {
@@ -57,23 +130,57 @@ pub struct SortingAlgorithms {
     sort_config: SortConfig,
     steps: Vec<Vec<SortCommand<u32>>>,
     active_step_index: usize,
+    _history_listener: HistoryHandle,
 }
 
 impl Component for SortingAlgorithms {
     type Message = Msg;
-    type Properties = ();
+    type Properties = SortingAlgorithmsProps;
 
     fn create(_ctx: &Context<Self>) -> Self {
-        let sort_config = SortConfig::default();
+        let mut sort_config = SortConfig::default();
+        let algorithms = sorting_algorithms();
+        if let Some(algorithm) = algorithms.get(_ctx.props().algorithm.as_str()) {
+            sort_config.sorting_algorithm = algorithm.to_owned();
+        }
         let input = knuth_shuffle(gen_u32_vec(sort_config.input_len));
-        let output = (sort_config.sorting_algorithm.sort)(input.clone());
-        let active_step = output.steps.len() - 1;
+        let output = (sort_config.sorting_algorithm.run)(input.clone());
+        let active_step_index = 0;
+
+        let _history_listener = {
+            let sort_config = sort_config.clone();
+            _ctx.link()
+                .add_history_listener(_ctx.link().callback(move |history: AnyHistory| {
+                    let algorithm_name = match history
+                        .location()
+                        .route::<SortingAlgorithmsRoute>()
+                        .unwrap()
+                    {
+                        SortingAlgorithmsRoute::SortingAlgorithm { algorithm } => algorithm,
+                        _ => "bubble-sort".to_string(),
+                    };
+                    if let Some(algorithm) = algorithms.get(algorithm_name.as_str()) {
+                        Msg::UpdateConfig(
+                            SortConfig {
+                                sorting_algorithm: algorithm.to_owned(),
+                                ..sort_config.clone()
+                            },
+                            true,
+                        )
+                    } else {
+                        Msg::UpdateConfig(sort_config.clone(), false)
+                    }
+                }))
+                .unwrap()
+        };
+
         SortingAlgorithms {
             input,
             output: SortResult::new(output.output, output.duration, output.steps.clone()),
             sort_config,
             steps: output.steps,
-            active_step_index: active_step,
+            active_step_index,
+            _history_listener,
         }
     }
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -86,7 +193,7 @@ impl Component for SortingAlgorithms {
             Msg::UpdateConfig(val, rerender) => {
                 self.sort_config = val;
                 if rerender {
-                self.update_values();
+                    self.update_values();
                 }
                 rerender
             }
@@ -100,17 +207,6 @@ impl Component for SortingAlgorithms {
         }
     }
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let active_step = (&self.steps[0..=self.active_step_index]).to_vec();
-        let mut active_step_output = self.input.clone();
-        run_sort_steps(&mut active_step_output, active_step);
-
-        let sort_duration = format!(
-            "{:?} ms",
-            match &self.output.duration {
-                Some(dur) => dur.as_millis(),
-                None => 0,
-            }
-        );
         let change_active_step = ctx.link().callback(|e: InputEvent| {
             let el: HtmlInputElement = e.target_unchecked_into();
             Msg::ChangeActiveStep(el.value().parse::<usize>())
@@ -127,29 +223,44 @@ impl Component for SortingAlgorithms {
                 <SortControls config={self.sort_config.clone()} {update_input} {update_config} />
 
                 <div class="content">
-                    <div class="input-container">
-                <h2>{"Input"}</h2>
+                    <h2>{ format!("{} steps, {}", self.steps.len(), self.get_sort_duration_ms()) }</h2>
 
-                        <Collapsible open={true} title={"Input graph"}>
-                            <SortGraph items={self.input.clone()} />
-                        </Collapsible>
-                    </div>
+                    {
+                        if self.active_step_index == 0 {
+                            html! { <SortGraph items={self.input.clone()} /> }
+                        } else {
+                            html! {
+                                <SortGraph
+                                    items={self.get_output_at_step_index(self.active_step_index)}
+                                    step={self.steps[self.active_step_index - 1].clone()}
+                                    audio_enabled={self.sort_config.audio_enabled}
+                                />
+                            }
+                        }
+                    }
 
-                    <div class="output-container">
-                        <h2>{ format!("Output ({} steps, {})", self.steps.len() - 1, sort_duration) }</h2>
-
-                    <Collapsible open={true} title={"Output graph"}>
-                                <SortGraph items={active_step_output} step={self.steps[self.active_step_index].clone()} audio_enabled={self.sort_config.audio_enabled} />
-                    </Collapsible>
-
-                        <div class="step-selector">
-                            <label for="active-step-input">
-                                { format!("Step: {}", self.active_step_index) }
-                            </label>
-                            <input type="range" id="active-step-input" min="0" max={(self.steps.len() - 1).to_string()} value={self.active_step_index.to_string()} oninput={change_active_step} />
-                        </div>
+                    <div class="step-selector">
+                        <label for="active-step-input">
+                            {
+                                if self.active_step_index == 0 {
+                                    format!("Step: {} (input)", self.active_step_index)
+                                } else {
+                                    format!("Step: {}", self.active_step_index)
+                                }
+                            }
+                        </label>
+                        <input
+                            type="range"
+                            id="active-step-input"
+                            min="0"
+                            max={(self.steps.len()).to_string()}
+                            value={self.active_step_index.to_string()}
+                            oninput={change_active_step}
+                        />
                     </div>
                 </div>
+
+                <SortDesc url={self.get_sort_desc_url()} />
             </div>
         }
     }
@@ -158,12 +269,30 @@ impl Component for SortingAlgorithms {
 impl SortingAlgorithms {
     fn update_values(&mut self) {
         self.input = knuth_shuffle(gen_u32_vec(self.sort_config.input_len));
-        let output = (self.sort_config.sorting_algorithm.sort)(self.input.clone());
+        let output = (self.sort_config.sorting_algorithm.run)(self.input.clone());
         self.output = SortResult::new(output.output, output.duration, output.steps.clone());
         self.steps = output.steps;
-
-        if self.active_step_index >= self.steps.len() {
-            self.active_step_index = self.steps.len() - 1;
-        }
+        self.active_step_index = 0;
+    }
+    /// Gets the output at a given step's index by running [`SortCommand`]s on the input.
+    fn get_output_at_step_index(&self, index: usize) -> Vec<u32> {
+        let mut output = self.input.to_vec();
+        run_sort_steps(&mut output, self.steps[0..index].to_vec());
+        output
+    }
+    fn get_sort_duration_ms(&self) -> String {
+        format!("{:?} ms", &self.output.duration.unwrap().as_millis())
+    }
+    fn get_sort_desc_url(&self) -> String {
+        let origin = window().unwrap().location().origin().unwrap();
+        format!(
+            "{}/src/{}/README.md",
+            origin,
+            self.sort_config
+                .sorting_algorithm
+                .name
+                .to_lowercase()
+                .replace(" ", "_")
+        )
     }
 }

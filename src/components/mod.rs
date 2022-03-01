@@ -1,3 +1,3 @@
 pub mod collapsible;
-pub mod sort_controls;
-pub mod sort_graph;
+pub mod raw_html;
+pub mod sorting_algorithms;
