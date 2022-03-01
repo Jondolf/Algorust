@@ -5,10 +5,10 @@ use crate::{
     utils::{gen_u32_vec, knuth_shuffle},
 };
 use sorting_algorithms::*;
-use std::{collections::BTreeMap, num::ParseIntError};
+use std::collections::BTreeMap;
 use web_sys::{window, HtmlInputElement};
 use yew::prelude::*;
-use yew_router::{prelude::*, scope_ext::HistoryHandle};
+use yew_router::prelude::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct SortingAlgorithm {
@@ -32,7 +32,7 @@ impl Default for SortingAlgorithm {
     }
 }
 
-pub fn sorting_algorithms() -> BTreeMap<&'static str, SortingAlgorithm> {
+pub fn get_sorting_algorithms() -> BTreeMap<&'static str, SortingAlgorithm> {
     // `BTreeMap` because it keeps the order of the items.
     BTreeMap::from([
         (
@@ -61,45 +61,20 @@ pub enum SortingAlgorithmsRoute {
 pub fn switch_sorting_algorithms(route: &SortingAlgorithmsRoute) -> Html {
     match route {
         SortingAlgorithmsRoute::SortingAlgorithms => html! {
-            <Redirect<SortingAlgorithmsRoute> to={SortingAlgorithmsRoute::SortingAlgorithm {algorithm: "bubble-sort".to_string()}} />
+            <Redirect<SortingAlgorithmsRoute> to={SortingAlgorithmsRoute::SortingAlgorithm { algorithm: "bubble-sort".to_string()} } />
         },
         SortingAlgorithmsRoute::SortingAlgorithm { algorithm } => {
-            if sorting_algorithms().contains_key(algorithm.as_str()) {
+            if get_sorting_algorithms().contains_key(algorithm.as_str()) {
                 html! {
-                    <SortingAlgorithms algorithm={algorithm.to_string()} />
+                    <SortingAlgorithmsPage algorithm={algorithm.to_string()} />
                 }
             } else {
                 html! {
-                    <SortingAlgorithms404 algorithm={algorithm.to_string()} />
+                    <SortingAlgorithms404Page algorithm={algorithm.to_string()} />
                 }
             }
         }
     }
-}
-
-#[derive(Clone, PartialEq, Properties)]
-struct SortingAlgorithms404Props {
-    algorithm: String,
-}
-
-#[function_component(SortingAlgorithms404)]
-fn sorting_algorithms_404(props: &SortingAlgorithms404Props) -> Html {
-    html! {
-        <>
-            <h1>{ "404" }</h1>
-            <p>{ format!("The algorithm \"{}\" was not found.", props.algorithm) }</p>
-            <Link<SortingAlgorithmsRoute> to={SortingAlgorithmsRoute::SortingAlgorithms}>
-                { "Back to sorting algorithms" }
-            </Link<SortingAlgorithmsRoute>>
-        </>
-    }
-}
-
-pub enum Msg {
-    UpdateInput(Vec<u32>),
-    /// Receives a new config and a boolean that controls if the change causes a rerender.
-    UpdateConfig(SortConfig, bool),
-    ChangeActiveStep(Result<usize, ParseIntError>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -119,121 +94,118 @@ impl Default for SortConfig {
 }
 
 #[derive(Properties, Clone, PartialEq)]
-pub struct SortingAlgorithmsProps {
+pub struct SortingAlgorithmsPageProps {
     #[prop_or("bubble-sort".to_string())]
     pub algorithm: String,
 }
 
-pub struct SortingAlgorithms {
-    input: Vec<u32>,
-    output: SortResult<u32>,
-    sort_config: SortConfig,
-    steps: Vec<Vec<SortCommand<u32>>>,
-    active_step_index: usize,
-    _history_listener: HistoryHandle,
-}
+#[function_component(SortingAlgorithmsPage)]
+pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
+    let config = {
+        let algorithm_name = props.algorithm.to_string();
 
-impl Component for SortingAlgorithms {
-    type Message = Msg;
-    type Properties = SortingAlgorithmsProps;
+        use_state_eq(|| {
+            let mut config = SortConfig::default();
+            if let Some(algorithm) = get_sorting_algorithms().get(algorithm_name.as_str()) {
+                config.sorting_algorithm = algorithm.to_owned();
+            }
+            config
+        })
+    };
+    let input = use_state(|| knuth_shuffle(gen_u32_vec(config.input_len)));
+    let output = use_state(|| (config.sorting_algorithm.run)((*input).clone()));
+    let steps = use_state(|| output.steps.to_owned());
+    let active_step_index: UseStateHandle<usize> = use_state_eq(|| 0);
 
-    fn create(_ctx: &Context<Self>) -> Self {
-        let mut sort_config = SortConfig::default();
-        let algorithms = sorting_algorithms();
-        if let Some(algorithm) = algorithms.get(_ctx.props().algorithm.as_str()) {
-            sort_config.sorting_algorithm = algorithm.to_owned();
+    let route = use_route::<SortingAlgorithmsRoute>();
+
+    let update_values = {
+        let config = config.clone();
+        let input = input.clone();
+        let output = output.clone();
+        let steps = steps.clone();
+        let active_step_index = active_step_index.clone();
+
+        move || {
+            input.set(knuth_shuffle(gen_u32_vec(config.input_len)));
+            let new_output = (config.sorting_algorithm.run)(input.to_vec());
+            steps.set(new_output.steps.clone());
+            output.set(new_output);
+            active_step_index.set(0);
         }
-        let input = knuth_shuffle(gen_u32_vec(sort_config.input_len));
-        let output = (sort_config.sorting_algorithm.run)(input.clone());
-        let active_step_index = 0;
+    };
 
-        let _history_listener = {
-            let sort_config = sort_config.clone();
-            _ctx.link()
-                .add_history_listener(_ctx.link().callback(move |history: AnyHistory| {
-                    let algorithm_name = match history
-                        .location()
-                        .route::<SortingAlgorithmsRoute>()
-                        .unwrap()
-                    {
-                        SortingAlgorithmsRoute::SortingAlgorithm { algorithm } => algorithm,
-                        _ => "bubble-sort".to_string(),
-                    };
-                    if let Some(algorithm) = algorithms.get(algorithm_name.as_str()) {
-                        Msg::UpdateConfig(
-                            SortConfig {
-                                sorting_algorithm: algorithm.to_owned(),
-                                ..sort_config.clone()
-                            },
-                            true,
-                        )
-                    } else {
-                        Msg::UpdateConfig(sort_config.clone(), false)
-                    }
-                }))
-                .unwrap()
-        };
+    let update_input = {
+        let input = input.clone();
+        Callback::from(move |val| {
+            input.set(val);
+        })
+    };
 
-        SortingAlgorithms {
-            input,
-            output: SortResult::new(output.output, output.duration, output.steps.clone()),
-            sort_config,
-            steps: output.steps,
-            active_step_index,
-            _history_listener,
-        }
+    let update_config = {
+        let config = config.clone();
+        Callback::from(move |msg: (SortConfig, bool)| {
+            config.set(msg.0);
+            if msg.1 {
+                update_values();
+            }
+        })
+    };
+
+    let update_active_step = {
+        let active_step_index = active_step_index.clone();
+        Callback::from(move |event: InputEvent| {
+            let el: HtmlInputElement = event.target_unchecked_into();
+            let value = el.value().parse::<usize>().unwrap();
+            active_step_index.set(value);
+        })
+    };
+
+    {
+        let config = config.clone();
+        let update_config = update_config.clone();
+
+        use_effect_with_deps(
+            move |route| {
+                let algorithm_name = match route.as_ref().unwrap() {
+                    SortingAlgorithmsRoute::SortingAlgorithm { algorithm } => algorithm,
+                    _ => "bubble-sort",
+                };
+                if let Some(algorithm) = get_sorting_algorithms().get(algorithm_name) {
+                    update_config.emit((
+                        SortConfig {
+                            sorting_algorithm: algorithm.to_owned(),
+                            ..(*config).clone()
+                        },
+                        true,
+                    ))
+                } else {
+                    update_config.emit(((*config).clone(), false));
+                };
+                || ()
+            },
+            route,
+        );
     }
-    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
-        match msg {
-            Msg::UpdateInput(val) => {
-                self.input = val;
-                self.update_values();
-                true
-            }
-            Msg::UpdateConfig(val, rerender) => {
-                self.sort_config = val;
-                if rerender {
-                    self.update_values();
-                }
-                rerender
-            }
-            Msg::ChangeActiveStep(res) => {
-                if let Ok(val) = res {
-                    self.active_step_index = val;
-                    return true;
-                }
-                false
-            }
-        }
-    }
-    fn view(&self, ctx: &Context<Self>) -> Html {
-        let change_active_step = ctx.link().callback(|e: InputEvent| {
-            let el: HtmlInputElement = e.target_unchecked_into();
-            Msg::ChangeActiveStep(el.value().parse::<usize>())
-        });
-        let update_input = ctx.link().callback(Msg::UpdateInput);
-        let update_config = ctx
-            .link()
-            .callback(|msg: (SortConfig, bool)| Msg::UpdateConfig(msg.0, msg.1));
 
-        html! {
-            <div id="SortingAlgorithms">
+    html! {
+        <div id="SortingAlgorithms">
                 <h1>{"Sorting algorithms"}</h1>
 
-                <SortControls config={self.sort_config.clone()} {update_input} {update_config} />
+                <SortControls config={(*config).clone()} {update_input} {update_config} />
 
                 <div class="content">
-                    <h2>{ format!("{} steps, {}", self.steps.len(), self.get_sort_duration_ms()) }</h2>
+                    <h2>{ format!("{} steps, {}", steps.len(), get_sort_duration_ms(&output.clone())) }</h2>
 
                     {
-                        if self.active_step_index == 0 {
-                            html! { <SortGraph items={self.input.clone()} /> }
+                        if *active_step_index == 0 {
+                            html! { <SortGraph items={(*input).clone()} /> }
                         } else {
                             html! {
                                 <SortGraph
-                                    items={self.get_output_at_step_index(self.active_step_index)}
-                                    step={self.steps[self.active_step_index - 1].clone()}
-                                    audio_enabled={self.sort_config.audio_enabled}
+                                    items={get_output_at_step_index(&input, &steps, *active_step_index)}
+                                    step={(*steps)[*active_step_index - 1].clone()}
+                                    audio_enabled={config.audio_enabled}
                                 />
                             }
                         }
@@ -242,10 +214,10 @@ impl Component for SortingAlgorithms {
                     <div class="step-selector">
                         <label for="active-step-input">
                             {
-                                if self.active_step_index == 0 {
-                                    format!("Step: {} (input)", self.active_step_index)
+                                if *active_step_index == 0 {
+                                    format!("Step: {} (input)", *active_step_index)
                                 } else {
-                                    format!("Step: {}", self.active_step_index)
+                                    format!("Step: {}", *active_step_index)
                                 }
                             }
                         </label>
@@ -253,46 +225,56 @@ impl Component for SortingAlgorithms {
                             type="range"
                             id="active-step-input"
                             min="0"
-                            max={(self.steps.len()).to_string()}
-                            value={self.active_step_index.to_string()}
-                            oninput={change_active_step}
+                            max={(steps.len()).to_string()}
+                            value={active_step_index.to_string()}
+                            oninput={update_active_step}
                         />
                     </div>
                 </div>
 
-                <SortDesc url={self.get_sort_desc_url()} />
+                <SortDesc url={get_sort_desc_url(&config.sorting_algorithm.name)} />
             </div>
-        }
     }
 }
 
-impl SortingAlgorithms {
-    fn update_values(&mut self) {
-        self.input = knuth_shuffle(gen_u32_vec(self.sort_config.input_len));
-        let output = (self.sort_config.sorting_algorithm.run)(self.input.clone());
-        self.output = SortResult::new(output.output, output.duration, output.steps.clone());
-        self.steps = output.steps;
-        self.active_step_index = 0;
-    }
-    /// Gets the output at a given step's index by running [`SortCommand`]s on the input.
-    fn get_output_at_step_index(&self, index: usize) -> Vec<u32> {
-        let mut output = self.input.to_vec();
-        run_sort_steps(&mut output, self.steps[0..index].to_vec());
-        output
-    }
-    fn get_sort_duration_ms(&self) -> String {
-        format!("{:?} ms", &self.output.duration.unwrap().as_millis())
-    }
-    fn get_sort_desc_url(&self) -> String {
-        let origin = window().unwrap().location().origin().unwrap();
-        format!(
-            "{}/src/{}/README.md",
-            origin,
-            self.sort_config
-                .sorting_algorithm
-                .name
-                .to_lowercase()
-                .replace(" ", "_")
-        )
+/// Gets the output at a given step's index by running [`SortCommand`]s on the input.
+fn get_output_at_step_index(
+    input: &[u32],
+    steps: &[Vec<SortCommand<u32>>],
+    index: usize,
+) -> Vec<u32> {
+    let mut output = input.to_vec();
+    run_sort_steps(&mut output, steps[0..index].to_vec());
+    output
+}
+
+fn get_sort_duration_ms(output: &SortResult<u32>) -> String {
+    format!("{:?} ms", &output.duration.unwrap().as_millis())
+}
+
+fn get_sort_desc_url(algorithm_name: &str) -> String {
+    let origin = window().unwrap().location().origin().unwrap();
+    format!(
+        "{}/src/{}/README.md",
+        origin,
+        algorithm_name.to_lowercase().replace(" ", "_")
+    )
+}
+
+#[derive(Clone, PartialEq, Properties)]
+struct SortingAlgorithms404PageProps {
+    algorithm: String,
+}
+
+#[function_component(SortingAlgorithms404Page)]
+fn sorting_algorithms_404_page(props: &SortingAlgorithms404PageProps) -> Html {
+    html! {
+        <>
+            <h1>{ "404" }</h1>
+            <p>{ format!("The algorithm \"{}\" was not found.", props.algorithm) }</p>
+            <Link<SortingAlgorithmsRoute> to={SortingAlgorithmsRoute::SortingAlgorithms}>
+                { "Back to sorting algorithms" }
+            </Link<SortingAlgorithmsRoute>>
+        </>
     }
 }

@@ -3,7 +3,7 @@ use yew::prelude::*;
 use yew_router::{history::History, hooks::use_history};
 
 use crate::{
-    pages::sorting_algorithms::{sorting_algorithms, SortConfig, SortingAlgorithmsRoute},
+    pages::sorting_algorithms::{get_sorting_algorithms, SortConfig, SortingAlgorithmsRoute},
     utils::{gen_u32_vec, knuth_shuffle},
 };
 
@@ -24,7 +24,7 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
 
     let history = use_history().unwrap();
 
-    let algorithm_options = sorting_algorithms()
+    let algorithm_options = get_sorting_algorithms()
         .values()
         .map(|a| view_sorting_algorithm_option(&config.sorting_algorithm.name, &a.name))
         .collect::<Html>();
