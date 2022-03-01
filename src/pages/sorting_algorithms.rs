@@ -112,48 +112,49 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
             config
         })
     };
-    let input = use_state(|| knuth_shuffle(gen_u32_vec(config.input_len)));
-    let output = use_state(|| (config.sorting_algorithm.run)((*input).clone()));
-    let steps = use_state(|| output.steps.to_owned());
+    let input = use_state_eq(|| knuth_shuffle(gen_u32_vec(config.input_len)));
+    let output = use_state_eq(|| (config.sorting_algorithm.run)((*input).clone()));
     let active_step_index: UseStateHandle<usize> = use_state_eq(|| 0);
 
     let route = use_route::<SortingAlgorithmsRoute>();
 
     let update_values = {
-        let config = config.clone();
         let input = input.clone();
         let output = output.clone();
-        let steps = steps.clone();
         let active_step_index = active_step_index.clone();
 
-        move || {
-            input.set(knuth_shuffle(gen_u32_vec(config.input_len)));
-            let new_output = (config.sorting_algorithm.run)(input.to_vec());
-            steps.set(new_output.steps.clone());
-            output.set(new_output);
+        move |new_input: Vec<u32>, config: &SortConfig| {
+            let new_output = (config.sorting_algorithm.run)(new_input.clone());
             active_step_index.set(0);
+            input.set(new_input);
+            output.set(new_output);
         }
     };
 
     let update_input = {
-        let input = input.clone();
+        let config = config.clone();
+        let update_values = update_values.clone();
+
         Callback::from(move |val| {
-            input.set(val);
+            update_values(val, &config);
         })
     };
 
     let update_config = {
         let config = config.clone();
+
         Callback::from(move |msg: (SortConfig, bool)| {
-            config.set(msg.0);
             if msg.1 {
-                update_values();
+                let new_input = knuth_shuffle(gen_u32_vec(msg.0.input_len));
+                update_values(new_input, &msg.0);
             }
+            config.set(msg.0);
         })
     };
 
     let update_active_step = {
         let active_step_index = active_step_index.clone();
+
         Callback::from(move |event: InputEvent| {
             let el: HtmlInputElement = event.target_unchecked_into();
             let value = el.value().parse::<usize>().unwrap();
@@ -195,7 +196,7 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
                 <SortControls config={(*config).clone()} {update_input} {update_config} />
 
                 <div class="content">
-                    <h2>{ format!("{} steps, {}", steps.len(), get_sort_duration_ms(&output.clone())) }</h2>
+                    <h2>{ format!("{} steps, {}", output.steps.len(), get_sort_duration_ms(&output.clone())) }</h2>
 
                     {
                         if *active_step_index == 0 {
@@ -203,8 +204,8 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
                         } else {
                             html! {
                                 <SortGraph
-                                    items={get_output_at_step_index(&input, &steps, *active_step_index)}
-                                    step={(*steps)[*active_step_index - 1].clone()}
+                                    items={get_output_at_step_index(&input, &output.steps, *active_step_index)}
+                                    step={(*output.steps)[*active_step_index - 1].clone()}
                                     audio_enabled={config.audio_enabled}
                                 />
                             }
@@ -225,7 +226,7 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
                             type="range"
                             id="active-step-input"
                             min="0"
-                            max={(steps.len()).to_string()}
+                            max={(output.steps.len()).to_string()}
                             value={active_step_index.to_string()}
                             oninput={update_active_step}
                         />
