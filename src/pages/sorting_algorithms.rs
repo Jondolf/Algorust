@@ -8,7 +8,7 @@ use crate::{
 };
 use instant::Duration;
 use sorting_algorithms::*;
-use std::collections::BTreeMap;
+use std::{borrow::Borrow, collections::BTreeMap};
 use web_sys::window;
 use yew::prelude::*;
 use yew_router::prelude::*;
@@ -16,21 +16,24 @@ use yew_router::prelude::*;
 #[derive(Clone, Debug, PartialEq)]
 pub struct SortingAlgorithm {
     pub name: String,
-    pub run: fn(Vec<u32>) -> SortResult<u32>,
+    sort: fn(Vec<u32>) -> SortResult<u32>,
 }
 impl SortingAlgorithm {
-    fn new(name: &str, run: fn(Vec<u32>) -> SortResult<u32>) -> Self {
+    fn new(name: &str, sort: fn(Vec<u32>) -> SortResult<u32>) -> Self {
         Self {
             name: name.to_string(),
-            run,
+            sort,
         }
+    }
+    fn sort(&self, input: Vec<u32>) -> SortResult<u32> {
+        (self.sort)(input)
     }
 }
 impl Default for SortingAlgorithm {
     fn default() -> Self {
         Self {
             name: String::from("Bubble sort"),
-            run: bubble_sort::sort,
+            sort: bubble_sort::sort,
         }
     }
 }
@@ -110,7 +113,7 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
     let config = {
         let algorithm_name = props.algorithm.to_string();
 
-        use_state_eq(|| {
+        use_state(|| {
             let mut config = SortConfig::default();
             if let Some(algorithm) = get_sorting_algorithms().get(algorithm_name.as_str()) {
                 config.sorting_algorithm = algorithm.to_owned();
@@ -118,8 +121,8 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
             config
         })
     };
-    let input = use_state_eq(|| knuth_shuffle(gen_u32_vec(config.input_len)));
-    let output = use_state_eq(|| (config.sorting_algorithm.run)((*input).clone()));
+    let input = use_state(|| knuth_shuffle(gen_u32_vec(config.input_len)));
+    let output = use_state_eq(|| config.sorting_algorithm.sort(input.to_vec()));
     let active_step_index: UseStateHandle<usize> = use_state_eq(|| 0);
     // The active step is empty at the input step, step 0.
     let active_step = if *active_step_index == 0 {
@@ -127,8 +130,9 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
     } else {
         (*output.steps)[*active_step_index - 1].clone()
     };
-    let output_at_active_step =
-        use_state_eq(|| get_output_at_step_index(&input, &output.steps, *active_step_index));
+    let output_at_active_step = use_state_eq(|| {
+        get_output_at_step_index(&*(*input).borrow(), &output.steps, *active_step_index)
+    });
 
     let route = use_route::<SortingAlgorithmsRoute>();
 
@@ -139,14 +143,14 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
         let output_at_active_step = output_at_active_step.clone();
 
         move |new_input: Vec<u32>, config: &SortConfig| {
-            let new_output = (config.sorting_algorithm.run)(new_input.clone());
+            let new_output = config.sorting_algorithm.sort(new_input.clone());
             let new_active_step = 0;
+            active_step_index.set(new_active_step);
             output_at_active_step.set(get_output_at_step_index(
-                &new_input,
+                &*(*new_input).borrow(),
                 &new_output.steps,
                 new_active_step,
             ));
-            active_step_index.set(new_active_step);
             input.set(new_input);
             output.set(new_output);
         }
@@ -175,20 +179,15 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
 
     let change_step = {
         let active_step_index = active_step_index.clone();
-        let steps = output.steps.clone();
+        let output = output.clone();
         let output_at_active_step = output_at_active_step.clone();
 
         Callback::from(move |val: usize| {
-            // If we go forward in steps, we only have to execute the steps in the changed range.
-            // Else we have to run all steps until the new active step.
-            if val > *active_step_index {
-                let steps = steps[*active_step_index..val].to_vec();
-                let mut new_output = (*output_at_active_step).to_vec();
-                run_sort_steps(&mut new_output, steps);
-                output_at_active_step.set(new_output);
-            } else {
-                output_at_active_step.set(get_output_at_step_index(&input, &steps, val));
-            }
+            output_at_active_step.set(get_output_at_step_index(
+                &*(*input).borrow(),
+                &output.steps,
+                val,
+            ));
             active_step_index.set(val);
         })
     };
@@ -234,7 +233,7 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
                 <SortControls config={(*config).clone()} {update_input} {update_config} />
 
                 <div class="content">
-                    <h2>{ format!("{} steps, {}", output.steps.len(), get_sort_duration_ms(&output.clone())) }</h2>
+                    <h2>{ format!("{} steps, {}", output.steps.len(), format!("{:?} ms", &output.duration.unwrap().as_millis())) }</h2>
 
                     <SortGraph
                         items={output_at_active_step.to_vec()}
@@ -261,12 +260,8 @@ fn get_output_at_step_index(
     index: usize,
 ) -> Vec<u32> {
     let mut output = input.to_vec();
-    run_sort_steps(&mut output, steps[0..index].to_vec());
+    run_sort_steps(&mut output, &steps[0..index]);
     output
-}
-
-fn get_sort_duration_ms(output: &SortResult<u32>) -> String {
-    format!("{:?} ms", &output.duration.unwrap().as_millis())
 }
 
 fn get_sort_desc_url(algorithm_name: &str) -> String {

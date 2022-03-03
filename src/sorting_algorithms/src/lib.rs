@@ -31,12 +31,12 @@ pub enum SortCommand<T> {
 }
 
 /// Runs given sorting operations on a vector of type T.
-pub fn run_sort_steps<T: Clone>(items: &mut Vec<T>, steps: Vec<Vec<SortCommand<T>>>) {
+pub fn run_sort_steps<T: Clone + Copy>(items: &mut [T], steps: &[Vec<SortCommand<T>>]) {
     for step in steps {
         for command in step {
             match command {
-                SortCommand::Swap(from, to) => items.swap(from, to),
-                SortCommand::Set(index, value) => items[index] = value,
+                SortCommand::Swap(from, to) => items.swap(*from, *to),
+                SortCommand::Set(index, value) => items[*index] = *value,
             }
         }
     }

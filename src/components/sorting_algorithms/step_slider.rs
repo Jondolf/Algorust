@@ -25,14 +25,32 @@ pub fn step_slider(props: &StepSliderProps) -> Html {
     let interval_ms = use_state(|| 0);
     let playing = *interval_ms != 0;
     // How long one step should play for in milliseconds.
-    let step_play_time_ms = playback_time / max as f32 * 1000.0;
-    // Roughly 60 fps
+    let step_play_time_ms = use_state(|| playback_time / max as f32 * 1000.0);
+    // Roughly 30 fps
     let max_refresh_rate_ms = 33.3333;
+
+    {
+        let step_play_time_ms = step_play_time_ms.clone();
+        let interval_ms = interval_ms.clone();
+
+        use_effect_with_deps(
+            move |_| {
+                let new_step_play_time_ms = playback_time / max as f32 * 1000.0;
+                step_play_time_ms.set(new_step_play_time_ms);
+                if playing {
+                    interval_ms.set(new_step_play_time_ms.max(max_refresh_rate_ms) as u32);
+                }
+                || ()
+            },
+            (playback_time, max),
+        );
+    }
 
     {
         let on_change = on_change.clone();
         let interval_ms_value = *interval_ms;
         let interval_ms = interval_ms.clone();
+        let step_play_time_ms = *step_play_time_ms;
 
         use_interval(
             move || {
