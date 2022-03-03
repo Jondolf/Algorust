@@ -43,7 +43,7 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
         move |e: InputEvent| {
             let el: HtmlInputElement = e.target_unchecked_into();
             if let Ok(input_len) = el.value().parse::<usize>() {
-                if input_len > 1 {
+                if input_len > 1 && input_len != config.input_len {
                     update_config.emit((
                         SortConfig {
                             input_len,
@@ -52,6 +52,23 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
                         true,
                     ));
                 }
+            }
+        }
+    };
+    let change_playback_time = {
+        let config = config.clone();
+        let update_config = update_config.clone();
+
+        move |e: InputEvent| {
+            let el: HtmlInputElement = e.target_unchecked_into();
+            if let Ok(playback_time) = el.value().parse::<f32>() {
+                update_config.emit((
+                    SortConfig {
+                        playback_time,
+                        ..config.clone()
+                    },
+                    true,
+                ));
             }
         }
     };
@@ -85,9 +102,17 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
                 <input id="inputLength"
                     type="number"
                     placeholder="Input length"
-                    min=1
                     value={props.config.input_len.to_string()}
                     oninput={change_input_len}
+                />
+            </div>
+            <div class="input-item">
+                <label for="playbackTime">{"Playback time (seconds)"}</label>
+                <input id="playbackTime"
+                    type="number"
+                    placeholder="Playback time in seconds"
+                    value={props.config.playback_time.to_string()}
+                    oninput={change_playback_time}
                 />
             </div>
             <div class="input-item">

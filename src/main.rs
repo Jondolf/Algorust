@@ -1,6 +1,7 @@
 extern crate sorting_algorithms;
 
 mod components;
+mod hooks;
 mod pages;
 mod utils;
 

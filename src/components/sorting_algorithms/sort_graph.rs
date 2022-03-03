@@ -2,16 +2,13 @@ use sorting_algorithms::SortCommand;
 
 // std::time isn't supported on WASM platforms
 use instant::{Duration, Instant};
-use std::{cell::RefCell, rc::Rc};
 use wasm_bindgen::{
     prelude::{wasm_bindgen, Closure},
     JsCast, JsValue,
 };
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, OscillatorType};
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 use yew::prelude::*;
 use yew_hooks::use_size;
-
-use crate::utils::audio::{Note, Synth};
 
 #[wasm_bindgen]
 extern "C" {
@@ -26,8 +23,6 @@ pub struct SortGraphProps {
     pub step: Vec<SortCommand<u32>>,
     #[prop_or(None)]
     pub prev_step: Option<Vec<SortCommand<u32>>>,
-    #[prop_or(true)]
-    pub audio_enabled: bool,
 }
 
 #[derive(Clone, PartialEq)]
@@ -35,7 +30,6 @@ pub struct SortGraphConfig {
     color_changed: String,
     color_unchanged: String,
     update_rate: Duration,
-    note_duration: Duration,
 }
 
 #[function_component(SortGraph)]
@@ -52,7 +46,6 @@ pub fn sort_graph(props: &SortGraphProps) -> Html {
         color_changed: "#00aaff".to_string(),
         color_unchanged: "#adff2f".to_string(),
         update_rate: Duration::from_millis(50),
-        note_duration: Duration::from_millis(200),
     };
 
     let draw_bars = {
@@ -132,13 +125,6 @@ pub fn sort_graph(props: &SortGraphProps) -> Html {
         }
     };
 
-    use_sort_audio(
-        props.items.clone(),
-        props.step.clone(),
-        config.clone(),
-        props.audio_enabled,
-    );
-
     // Set canvas and canvas ctx, draw initial
     if (*canvas).is_none() {
         if let Some(canvas_el) = canvas_ref.cast::<HtmlCanvasElement>() {
@@ -205,45 +191,6 @@ pub fn sort_graph(props: &SortGraphProps) -> Html {
             <canvas class="sort-visualization" ref={canvas_ref.clone()}></canvas>
         </div>
     }
-}
-
-fn use_sort_audio(
-    items: Vec<u32>,
-    step: Vec<SortCommand<u32>>,
-    config: SortGraphConfig,
-    enabled: bool,
-) {
-    let synth = use_state_eq(|| Rc::new(RefCell::new(Synth::new())));
-
-    use_effect_with_deps(
-        move |step| {
-            if enabled {
-                synth.borrow_mut().stop_all();
-
-                let max_frequency = 800.0;
-                let min_frequency = 20.0;
-
-                let mut notes: Vec<Note> = vec![];
-
-                let ctx = Rc::clone(&(**synth).borrow().ctx);
-
-                for command in step.iter() {
-                    let val = match command {
-                        SortCommand::Swap(_, to) => items[*to],
-                        SortCommand::Set(index, _) => items[*index],
-                    } as f32;
-                    let ratio = val / *items.iter().max().unwrap() as f32;
-                    let frequency = min_frequency + (max_frequency - min_frequency) * ratio;
-
-                    notes.push(Note::new(&ctx, frequency, OscillatorType::Sine));
-                }
-
-                synth.borrow_mut().play(notes, config.note_duration);
-            }
-            || ()
-        },
-        step,
-    );
 }
 
 fn set_stroke_style(ctx: &CanvasRenderingContext2d, stroke_style: String) {

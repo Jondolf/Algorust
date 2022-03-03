@@ -19,8 +19,20 @@ h1 {
   }
 }
 
-.step-selector {
-  height: 3rem;
+.step-slider {
+  button {
+    display: block;
+    width: 2rem;
+    height: 2rem;
+    padding: 0.5rem;
+    margin: auto;
+    box-sizing: border-box;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
 }
 
 .sort-visualization {

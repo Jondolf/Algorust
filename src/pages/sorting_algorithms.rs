@@ -1,12 +1,15 @@
 use crate::{
     components::sorting_algorithms::{
         sort_controls::SortControls, sort_desc::SortDesc, sort_graph::SortGraph,
+        step_slider::StepSlider,
     },
+    hooks::use_sort_audio::use_sort_audio,
     utils::{gen_u32_vec, knuth_shuffle},
 };
+use instant::Duration;
 use sorting_algorithms::*;
 use std::collections::BTreeMap;
-use web_sys::{window, HtmlInputElement};
+use web_sys::window;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -82,6 +85,8 @@ pub struct SortConfig {
     pub input_len: usize,
     pub sorting_algorithm: SortingAlgorithm,
     pub audio_enabled: bool,
+    /// How long the playback of steps should take in seconds.
+    pub playback_time: f32,
 }
 impl Default for SortConfig {
     fn default() -> Self {
@@ -89,6 +94,7 @@ impl Default for SortConfig {
             input_len: 100,
             sorting_algorithm: SortingAlgorithm::default(),
             audio_enabled: true,
+            playback_time: 10.0,
         }
     }
 }
@@ -115,6 +121,14 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
     let input = use_state_eq(|| knuth_shuffle(gen_u32_vec(config.input_len)));
     let output = use_state_eq(|| (config.sorting_algorithm.run)((*input).clone()));
     let active_step_index: UseStateHandle<usize> = use_state_eq(|| 0);
+    // The active step is empty at the input step, step 0.
+    let active_step = if *active_step_index == 0 {
+        vec![]
+    } else {
+        (*output.steps)[*active_step_index - 1].clone()
+    };
+    let output_at_active_step =
+        use_state_eq(|| get_output_at_step_index(&input, &output.steps, *active_step_index));
 
     let route = use_route::<SortingAlgorithmsRoute>();
 
@@ -122,10 +136,17 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
         let input = input.clone();
         let output = output.clone();
         let active_step_index = active_step_index.clone();
+        let output_at_active_step = output_at_active_step.clone();
 
         move |new_input: Vec<u32>, config: &SortConfig| {
             let new_output = (config.sorting_algorithm.run)(new_input.clone());
-            active_step_index.set(0);
+            let new_active_step = 0;
+            output_at_active_step.set(get_output_at_step_index(
+                &new_input,
+                &new_output.steps,
+                new_active_step,
+            ));
+            active_step_index.set(new_active_step);
             input.set(new_input);
             output.set(new_output);
         }
@@ -152,13 +173,23 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
         })
     };
 
-    let update_active_step = {
+    let change_step = {
         let active_step_index = active_step_index.clone();
+        let steps = output.steps.clone();
+        let output_at_active_step = output_at_active_step.clone();
 
-        Callback::from(move |event: InputEvent| {
-            let el: HtmlInputElement = event.target_unchecked_into();
-            let value = el.value().parse::<usize>().unwrap();
-            active_step_index.set(value);
+        Callback::from(move |val: usize| {
+            // If we go forward in steps, we only have to execute the steps in the changed range.
+            // Else we have to run all steps until the new active step.
+            if val > *active_step_index {
+                let steps = steps[*active_step_index..val].to_vec();
+                let mut new_output = (*output_at_active_step).to_vec();
+                run_sort_steps(&mut new_output, steps);
+                output_at_active_step.set(new_output);
+            } else {
+                output_at_active_step.set(get_output_at_step_index(&input, &steps, val));
+            }
+            active_step_index.set(val);
         })
     };
 
@@ -189,6 +220,13 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
         );
     }
 
+    use_sort_audio(
+        output_at_active_step.to_vec(),
+        active_step.clone(),
+        Duration::from_millis(200),
+        config.audio_enabled,
+    );
+
     html! {
         <div id="SortingAlgorithms">
                 <h1>{"Sorting algorithms"}</h1>
@@ -198,39 +236,17 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
                 <div class="content">
                     <h2>{ format!("{} steps, {}", output.steps.len(), get_sort_duration_ms(&output.clone())) }</h2>
 
-                    {
-                        if *active_step_index == 0 {
-                            html! { <SortGraph items={(*input).clone()} /> }
-                        } else {
-                            html! {
-                                <SortGraph
-                                    items={get_output_at_step_index(&input, &output.steps, *active_step_index)}
-                                    step={(*output.steps)[*active_step_index - 1].clone()}
-                                    audio_enabled={config.audio_enabled}
-                                />
-                            }
-                        }
-                    }
+                    <SortGraph
+                        items={output_at_active_step.to_vec()}
+                        step={active_step}
+                    />
 
-                    <div class="step-selector">
-                        <label for="active-step-input">
-                            {
-                                if *active_step_index == 0 {
-                                    format!("Step: {} (input)", *active_step_index)
-                                } else {
-                                    format!("Step: {}", *active_step_index)
-                                }
-                            }
-                        </label>
-                        <input
-                            type="range"
-                            id="active-step-input"
-                            min="0"
-                            max={(output.steps.len()).to_string()}
-                            value={active_step_index.to_string()}
-                            oninput={update_active_step}
-                        />
-                    </div>
+                    <StepSlider
+                        active_step_index={*active_step_index}
+                        max={output.steps.len()}
+                        on_change={change_step}
+                        playback_time={config.playback_time}
+                    />
                 </div>
 
                 <SortDesc url={get_sort_desc_url(&config.sorting_algorithm.name)} />
