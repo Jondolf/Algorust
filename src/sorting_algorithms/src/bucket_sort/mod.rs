@@ -1,29 +1,9 @@
-use crate::{insertion_sort, SortCommand, SortResult};
+use crate::{insertion_sort, SortCommand};
 
-/// # Bucket sort
-///
-/// Sorts a list of values of type T with the bucket sort algorithm.
-///
-/// ## Example
-///
-/// ```rust
-/// use sorting_algorithms::{bucket_sort::sort, SortResult};
-///
-/// let arr = vec![6, 4, 0, 9, 3, 5, 8, 1];
-/// let items = vec![6, 4, 0, 9, 3, 5, 8, 1];
-/// assert_eq!(sort(items).output, vec![0, 1, 3, 4, 5, 6, 8, 9]);
-/// ```
-pub fn sort(mut items: Vec<u32>) -> SortResult<u32> {
-    let mut steps: Vec<Vec<SortCommand<u32>>> = vec![];
-    let start = instant::Instant::now();
-
-    bucket_sort(&mut items, &mut steps);
-
-    let duration = start.elapsed();
-    SortResult::new(items, Some(duration), steps)
-}
-
-fn bucket_sort(items: &mut Vec<u32>, steps: &mut Vec<Vec<SortCommand<u32>>>) {
+pub fn bucket_sort(
+    mut items: Vec<u32>,
+    mut steps: Vec<Vec<SortCommand<u32>>>,
+) -> (Vec<u32>, Vec<Vec<SortCommand<u32>>>) {
     let size = items.len();
     let k = (size as f32).sqrt().ceil() as usize; // Number of buckets
     let mut buckets: Vec<Vec<u32>> = vec![Vec::with_capacity(size / k); k];
@@ -46,18 +26,20 @@ fn bucket_sort(items: &mut Vec<u32>, steps: &mut Vec<Vec<SortCommand<u32>>>) {
     // Sort all buckets individually
     for i in 0..k {
         // Sort the bucket
-        let result = insertion_sort::sort(buckets[i].clone());
+        let (output, sub_steps) = insertion_sort(buckets[i].clone(), vec![]);
 
-        // Get the sort's steps and offset their indices to match their real positions in `items`
-        let sub_steps = add_offset_to_step_indices(&result.steps, bucket_start_i);
+        // Offset the sort steps' indices to match their real positions in `items`
+        let sub_steps = add_offset_to_step_indices(&sub_steps, bucket_start_i);
         steps.extend(sub_steps);
 
         bucket_start_i += buckets[i].len();
-        buckets[i] = result.output;
+        buckets[i] = output;
     }
 
     // Concatenate the buckets
-    *items = buckets.into_iter().flatten().collect();
+    items = buckets.into_iter().flatten().collect();
+
+    (items, steps)
 }
 
 /// Adds a given offset to the indices in [`SortCommand`]s. Useful when running a sorting algorithm inside another sorting algorithm.

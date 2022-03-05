@@ -1,44 +1,28 @@
-use std::fmt::Debug;
+use crate::SortCommand;
 
-use crate::{SortCommand, SortResult};
-
-/// # Merge sort
-///
-/// Sorts a list of values of type T with the merge sort algorithm.
-///
-/// ## Example
-///
-/// ```rust
-/// use sorting_algorithms::{merge_sort::sort, SortResult};
-///
-/// let items = vec![6, 4, 0, 9, 3, 5, 8, 1];
-/// assert_eq!(sort(items).output, vec![0, 1, 3, 4, 5, 6, 8, 9]);
-/// ```
-pub fn sort<T: Clone + Copy + Debug + PartialOrd>(mut items: Vec<T>) -> SortResult<T> {
-    let mut steps: Vec<Vec<SortCommand<T>>> = vec![];
-
-    let start = instant::Instant::now();
-    items = merge_sort(items.clone(), &mut steps, 0);
-    let duration = start.elapsed();
-
-    SortResult::new(items, Some(duration), steps)
+pub fn merge_sort<T: Copy + Clone + Ord>(
+    mut items: Vec<T>,
+    mut steps: Vec<Vec<SortCommand<T>>>,
+) -> (Vec<T>, Vec<Vec<SortCommand<T>>>) {
+    items = _merge_sort(items, &mut steps, 0);
+    (items, steps)
 }
 
-fn merge_sort<T: Copy + Clone + Debug + PartialOrd>(
+fn _merge_sort<T: Copy + Clone + PartialOrd>(
     mut items: Vec<T>,
     mut steps: &mut Vec<Vec<SortCommand<T>>>,
     start_i: usize,
 ) -> Vec<T> {
     if items.len() > 1 {
         let middle = items.len() / 2;
-        let left_half = merge_sort(items[0..middle].to_vec(), &mut steps, start_i);
-        let right_half = merge_sort(items[middle..].to_vec(), &mut steps, start_i + middle);
+        let left_half = _merge_sort(items[0..middle].to_vec(), &mut steps, start_i);
+        let right_half = _merge_sort(items[middle..].to_vec(), &mut steps, start_i + middle);
         items = merge(left_half, right_half, &mut steps, start_i);
     }
     items
 }
 
-fn merge<T: Copy + Clone + Debug + PartialOrd>(
+fn merge<T: Copy + Clone + PartialOrd>(
     a: Vec<T>,
     b: Vec<T>,
     steps: &mut Vec<Vec<SortCommand<T>>>,

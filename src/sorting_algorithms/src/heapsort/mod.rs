@@ -1,32 +1,9 @@
-use crate::{SortCommand, SortResult};
+use crate::SortCommand;
 
-/// # Heapsort
-///
-/// Sorts a list of values of type T with the heapsort algorithm.
-///
-/// ## Example
-///
-/// ```rust
-/// use sorting_algorithms::{heapsort::sort, SortResult};
-///
-/// let arr = vec![6, 4, 0, 9, 3, 5, 8, 1];
-/// let items = vec![6, 4, 0, 9, 3, 5, 8, 1];
-/// assert_eq!(sort(items).output, vec![0, 1, 3, 4, 5, 6, 8, 9]);
-/// ```
-pub fn sort<T: Clone + Copy + Ord>(mut items: Vec<T>) -> SortResult<T> {
-    let mut steps: Vec<Vec<SortCommand<T>>> = vec![];
-    let start = instant::Instant::now();
-
-    heap_sort(&mut items, &mut steps);
-
-    let duration = start.elapsed();
-    SortResult::new(items, Some(duration), steps)
-}
-
-fn heap_sort<T: Clone + Copy + Ord>(
-    mut items: &mut Vec<T>,
-    mut steps: &mut Vec<Vec<SortCommand<T>>>,
-) {
+pub fn heapsort<T: Clone + Copy + Ord>(
+    mut items: Vec<T>,
+    mut steps: Vec<Vec<SortCommand<T>>>,
+) -> (Vec<T>, Vec<Vec<SortCommand<T>>>) {
     let size = items.len();
 
     // Build heap
@@ -43,6 +20,8 @@ fn heap_sort<T: Clone + Copy + Ord>(
         // Max heapify the reduced heap
         heapify(&mut items, i, 0, &mut steps);
     }
+
+    (items, steps)
 }
 
 fn heapify<T: Clone + Copy + Ord>(

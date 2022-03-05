@@ -13,27 +13,29 @@ use web_sys::window;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
+type SortSteps = Vec<Vec<SortCommand<u32>>>;
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct SortingAlgorithm {
     pub name: String,
-    sort: fn(Vec<u32>) -> SortResult<u32>,
+    sort: fn(Vec<u32>, SortSteps) -> (Vec<u32>, SortSteps),
 }
 impl SortingAlgorithm {
-    fn new(name: &str, sort: fn(Vec<u32>) -> SortResult<u32>) -> Self {
+    fn new(name: &str, sort: fn(Vec<u32>, SortSteps) -> (Vec<u32>, SortSteps)) -> Self {
         Self {
             name: name.to_string(),
             sort,
         }
     }
     fn sort(&self, input: Vec<u32>) -> SortResult<u32> {
-        (self.sort)(input)
+        run_sort(input, self.sort)
     }
 }
 impl Default for SortingAlgorithm {
     fn default() -> Self {
         Self {
             name: String::from("Bubble sort"),
-            sort: bubble_sort::sort,
+            sort: bubble_sort,
         }
     }
 }
@@ -43,27 +45,21 @@ pub fn get_sorting_algorithms() -> BTreeMap<&'static str, SortingAlgorithm> {
     BTreeMap::from([
         (
             "bubble-sort",
-            SortingAlgorithm::new("Bubble sort", bubble_sort::sort),
+            SortingAlgorithm::new("Bubble sort", bubble_sort),
         ),
         (
             "insertion-sort",
-            SortingAlgorithm::new("Insertion sort", insertion_sort::sort),
+            SortingAlgorithm::new("Insertion sort", insertion_sort),
         ),
         (
             "merge-sort",
-            SortingAlgorithm::new("Merge sort", merge_sort::sort),
+            SortingAlgorithm::new("Merge sort", merge_sort),
         ),
-        (
-            "heapsort",
-            SortingAlgorithm::new("Heapsort", heapsort::sort),
-        ),
-        (
-            "quicksort",
-            SortingAlgorithm::new("Quicksort", quicksort::sort),
-        ),
+        ("heapsort", SortingAlgorithm::new("Heapsort", heapsort)),
+        ("quicksort", SortingAlgorithm::new("Quicksort", quicksort)),
         (
             "bucket-sort",
-            SortingAlgorithm::new("Bucket sort", bucket_sort::sort),
+            SortingAlgorithm::new("Bucket sort", bucket_sort),
         ),
     ])
 }

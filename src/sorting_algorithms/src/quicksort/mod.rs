@@ -1,30 +1,15 @@
-use crate::{SortCommand, SortResult};
+use crate::SortCommand;
 
-/// # Quicksort
-///
-/// Sorts a list of values of type T with the quicksort algorithm.
-///
-/// ## Example
-///
-/// ```rust
-/// use sorting_algorithms::{quicksort::sort, SortResult};
-///
-/// let arr = vec![6, 4, 0, 9, 3, 5, 8, 1];
-/// let items = vec![6, 4, 0, 9, 3, 5, 8, 1];
-/// assert_eq!(sort(items).output, vec![0, 1, 3, 4, 5, 6, 8, 9]);
-/// ```
-pub fn sort<T: Clone + Copy + Ord>(mut items: Vec<T>) -> SortResult<T> {
-    let mut steps: Vec<Vec<SortCommand<T>>> = vec![];
-    let start = instant::Instant::now();
-
+pub fn quicksort<T: Clone + Copy + Ord>(
+    mut items: Vec<T>,
+    mut steps: Vec<Vec<SortCommand<T>>>,
+) -> (Vec<T>, Vec<Vec<SortCommand<T>>>) {
     let high = items.len() as isize - 1;
-    quicksort(&mut items, &mut steps, 0, high);
-
-    let duration = start.elapsed();
-    SortResult::new(items, Some(duration), steps)
+    _quicksort(&mut items, &mut steps, 0, high);
+    (items, steps)
 }
 
-fn quicksort<T: Clone + Copy + Ord>(
+fn _quicksort<T: Clone + Copy + Ord>(
     mut items: &mut Vec<T>,
     mut steps: &mut Vec<Vec<SortCommand<T>>>,
     low: isize,
@@ -32,8 +17,8 @@ fn quicksort<T: Clone + Copy + Ord>(
 ) {
     if low < high {
         let pivot_i = partition(&mut items, &mut steps, low, high);
-        quicksort(&mut items, &mut steps, low, pivot_i - 1);
-        quicksort(&mut items, &mut steps, pivot_i + 1, high);
+        _quicksort(&mut items, &mut steps, low, pivot_i - 1);
+        _quicksort(&mut items, &mut steps, pivot_i + 1, high);
     }
 }
 
