@@ -57,6 +57,10 @@ pub fn get_sorting_algorithms() -> BTreeMap<&'static str, SortingAlgorithm> {
             "heapsort",
             SortingAlgorithm::new("Heapsort", heapsort::sort),
         ),
+        (
+            "quicksort",
+            SortingAlgorithm::new("Quicksort", quicksort::sort),
+        ),
     ])
 }
 
