@@ -1,10 +1,11 @@
-use std::time::Duration;
 pub mod bubble_sort;
 pub mod bucket_sort;
 pub mod heapsort;
 pub mod insertion_sort;
 pub mod merge_sort;
 pub mod quicksort;
+
+use std::time::Duration;
 
 /// A command used when sorting a collection in steps.
 ///
@@ -21,7 +22,7 @@ pub mod quicksort;
 ///     vec![SortCommand::Set(1, 2)], // Set 4 to 2
 /// ];
 ///
-/// run_sort_steps(&mut items, steps);
+/// run_sort_steps(&mut items, &steps);
 ///
 /// assert_eq!(items, vec![1, 2, 3]);
 /// ```
