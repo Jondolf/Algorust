@@ -12,8 +12,7 @@ use crate::{SortCommand, SortResult};
 /// let items = vec![6, 4, 0, 9, 3, 5, 8, 1];
 /// assert_eq!(sort(items).output, vec![0, 1, 3, 4, 5, 6, 8, 9]);
 /// ```
-pub fn sort<T: Clone + Copy + PartialOrd>(items: Vec<T>) -> SortResult<T> {
-    let mut items = items.clone();
+pub fn sort<T: Clone + Copy + PartialOrd>(mut items: Vec<T>) -> SortResult<T> {
     let mut steps: Vec<Vec<SortCommand<T>>> = vec![];
     let start = instant::Instant::now();
     for i in 1..items.len() {
