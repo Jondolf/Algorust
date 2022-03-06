@@ -19,7 +19,7 @@ select {
   padding: 0;
 }
 
-.input-item {
+.input {
   position: relative;
   margin-right: 1rem;
   margin-bottom: 1rem;
@@ -132,13 +132,13 @@ table {
     font-size: 0.8em;
   }
 
-  .input-item button {
+  .input button {
     height: 2.75rem;
     padding: 0.3rem;
   }
 
-  .input-item input,
-  .input-item select {
+  .input input,
+  .input select {
     height: 2.75rem;
     padding: 0.8rem 0.3rem 0 0.3rem;
   }
