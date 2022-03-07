@@ -187,9 +187,7 @@ pub fn sort_graph(props: &SortGraphProps) -> Html {
     );
 
     html! {
-        <div class="sort-visualization">
-            <canvas class="sort-visualization" ref={canvas_ref.clone()}></canvas>
-        </div>
+        <canvas class="sort-graph" ref={canvas_ref.clone()}></canvas>
     }
 }
 

@@ -1,7 +1,5 @@
 use crate::{
-    components::sorting_algorithms::{
-        sort_controls::SortControls, sort_desc::SortDesc, sort_graph::SortGraph,
-        step_slider::StepSlider,
+        sidebar::Sidebar,
     },
     hooks::use_sort_audio::use_sort_audio,
     utils::{gen_u32_vec, knuth_shuffle},
@@ -235,17 +233,19 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
     );
 
     html! {
-        <div id="SortingAlgorithms">
-                <h1>{"Sorting algorithms"}</h1>
-
+        <div class="page" id="SortingAlgorithms">
+            <Sidebar>
+                <h2>{"Config"}</h2>
                 <SortControls config={(*config).clone()} {update_input} {update_config} />
+            </Sidebar>
 
-                <div class="content">
+            <main>
+                <div class="visualization">
                     <h2>{ format!("{} steps, {}", output.steps.len(), format!("{:?} ms", &output.duration.unwrap().as_millis())) }</h2>
 
                     <SortGraph
                         items={output_at_active_step.to_vec()}
-                        step={active_step}
+                        step={active_step.to_vec()}
                     />
 
                     <StepSlider
@@ -254,9 +254,26 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
                         on_change={change_step}
                         playback_time={config.playback_time}
                     />
+
+                    <span class="step-info">
+                        {
+                            if *active_step_index == 0 {
+                                format!("Step {} (input)", *active_step_index)
+                            } else {
+                                format!("Step {}: ", *active_step_index)
+                            }
+                        }
+                        {
+                            active_step.iter().map(|command| match command {
+                                SortCommand::Swap(from, to) => format!("SWAP indices {} and {}", from, to),
+                                SortCommand::Set(i, val) => format!("SET value at index {} to {}", i, val),
+                            }).collect::<Vec<String>>().join(";")
+                        }
+                    </span>
                 </div>
 
                 <SortDesc url={get_sort_desc_url(&config.sorting_algorithm.name)} />
+            </main>
             </div>
     }
 }

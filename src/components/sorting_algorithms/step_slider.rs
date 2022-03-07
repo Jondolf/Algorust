@@ -105,15 +105,7 @@ pub fn step_slider(props: &StepSliderProps) -> Html {
 
     html! {
         <div class="step-slider">
-            <label for="active-step-input">
-                {
-                    if active_step_index == 0 {
-                        format!("Step: {} (input)", active_step_index)
-                    } else {
-                        format!("Step: {}", active_step_index)
-                    }
-                }
-            </label>
+            { playback_button(on_click_playback_button, playing) }
             <input
                 type="range"
                 id="active-step-input"
@@ -122,7 +114,6 @@ pub fn step_slider(props: &StepSliderProps) -> Html {
                 value={active_step_index.to_string()}
                 {oninput}
             />
-            { playback_button(on_click_playback_button, playing) }
         </div>
     }
 }
