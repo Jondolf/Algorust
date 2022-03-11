@@ -1,12 +1,13 @@
 use crate::components::input_items::input_title_to_id;
 
-use std::fmt::Display;
+use std::{fmt::Display, str::FromStr};
 
 use num_traits::{Float, PrimInt};
+use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
 #[derive(Properties, Clone, PartialEq)]
-pub struct IntInputProps<T: Clone + Copy + Display + PartialEq + PrimInt> {
+pub struct IntInputProps<T: 'static + Clone + Copy + Display + PartialEq + PrimInt + FromStr> {
     pub title: String,
     pub value: T,
     #[prop_or(None)]
@@ -15,11 +16,11 @@ pub struct IntInputProps<T: Clone + Copy + Display + PartialEq + PrimInt> {
     pub max: Option<T>,
     #[prop_or(T::from(1).unwrap())]
     pub step: T,
-    pub oninput: Callback<InputEvent>,
+    pub oninput: Callback<T>,
 }
 
 #[function_component(IntInput)]
-pub fn int_input<T: Clone + Copy + Display + PartialEq + PrimInt>(
+pub fn int_input<T: 'static + Clone + Copy + Display + PartialEq + PrimInt + FromStr>(
     props: &IntInputProps<T>,
 ) -> Html {
     let IntInputProps {
@@ -31,6 +32,12 @@ pub fn int_input<T: Clone + Copy + Display + PartialEq + PrimInt>(
         oninput,
     } = props.clone();
     let id = input_title_to_id(&title);
+    let oninput = move |event: InputEvent| {
+        let el: HtmlInputElement = event.target_unchecked_into();
+        if let Ok(value) = el.value().parse::<T>() {
+            oninput.emit(value);
+        }
+    };
 
     html! {
         <div class="input number-input">
@@ -49,7 +56,7 @@ pub fn int_input<T: Clone + Copy + Display + PartialEq + PrimInt>(
 }
 
 #[derive(Properties, Clone, PartialEq)]
-pub struct FloatInputProps<T: Clone + Copy + Display + PartialEq + Float> {
+pub struct FloatInputProps<T: 'static + Clone + Copy + Display + PartialEq + Float + FromStr> {
     pub title: String,
     pub value: T,
     #[prop_or(None)]
@@ -58,11 +65,11 @@ pub struct FloatInputProps<T: Clone + Copy + Display + PartialEq + Float> {
     pub max: Option<T>,
     #[prop_or(T::from(0.1).unwrap())]
     pub step: T,
-    pub oninput: Callback<InputEvent>,
+    pub oninput: Callback<T>,
 }
 
 #[function_component(FloatInput)]
-pub fn float_input<T: Clone + Copy + Display + PartialEq + Float>(
+pub fn float_input<T: 'static + Clone + Copy + Display + PartialEq + Float + FromStr>(
     props: &FloatInputProps<T>,
 ) -> Html {
     let FloatInputProps {
@@ -74,6 +81,12 @@ pub fn float_input<T: Clone + Copy + Display + PartialEq + Float>(
         oninput,
     } = props.clone();
     let id = input_title_to_id(&title);
+    let oninput = move |event: InputEvent| {
+        let el: HtmlInputElement = event.target_unchecked_into();
+        if let Ok(value) = el.value().parse::<T>() {
+            oninput.emit(value);
+        }
+    };
 
     html! {
         <div class="input number-input">

@@ -1,10 +1,18 @@
 use crate::{
+    components::{
+        collapsible::Collapsible,
         sidebar::Sidebar,
+        sorting_algorithms::{
+            audio_controls::{AudioConfig, AudioControls},
+            sort_controls::SortControls,
+            sort_desc::SortDesc,
+            sort_graph::SortGraph,
+            step_slider::StepSlider,
+        },
     },
     hooks::use_sort_audio::use_sort_audio,
     utils::{gen_u32_vec, knuth_shuffle},
 };
-use instant::Duration;
 use sorting_algorithms::*;
 use std::{borrow::Borrow, collections::BTreeMap};
 use web_sys::window;
@@ -96,6 +104,7 @@ pub struct SortConfig {
     pub audio_enabled: bool,
     /// How long the playback of steps should take in seconds.
     pub playback_time: f32,
+    pub audio_config: AudioConfig,
 }
 impl Default for SortConfig {
     fn default() -> Self {
@@ -104,6 +113,7 @@ impl Default for SortConfig {
             sorting_algorithm: SortingAlgorithm::default(),
             audio_enabled: true,
             playback_time: 10.0,
+            audio_config: AudioConfig::default(),
         }
     }
 }
@@ -173,6 +183,7 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
 
     let update_config = {
         let config = config.clone();
+        let update_values = update_values.clone();
 
         Callback::from(move |msg: (SortConfig, bool)| {
             if msg.1 {
@@ -180,6 +191,22 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
                 update_values(new_input, &msg.0);
             }
             config.set(msg.0);
+        })
+    };
+
+    let update_audio_config = {
+        let config = config.clone();
+        let update_values = update_values.clone();
+
+        Callback::from(move |msg: (AudioConfig, bool)| {
+            if msg.1 {
+                let new_input = knuth_shuffle(gen_u32_vec(config.input_len));
+                update_values(new_input, &config);
+            }
+            config.set(SortConfig {
+                audio_config: msg.0,
+                ..(*config).clone()
+            });
         })
     };
 
@@ -228,15 +255,21 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
     use_sort_audio(
         output_at_active_step.to_vec(),
         active_step.clone(),
-        Duration::from_millis(200),
-        config.audio_enabled,
+        config.audio_config.clone(),
     );
 
     html! {
         <div class="page" id="SortingAlgorithms">
             <Sidebar>
                 <h2>{"Config"}</h2>
-                <SortControls config={(*config).clone()} {update_input} {update_config} />
+
+                <Collapsible title="General" open={true} class="config-section">
+                    <SortControls config={(*config).clone()} {update_input} {update_config} />
+                </Collapsible>
+
+                <Collapsible title="Audio" open={false} class="config-section">
+                    <AudioControls config={config.audio_config.clone()} update_config={update_audio_config} />
+                </Collapsible>
             </Sidebar>
 
             <main>
@@ -274,7 +307,7 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
 
                 <SortDesc url={get_sort_desc_url(&config.sorting_algorithm.name)} />
             </main>
-            </div>
+        </div>
     }
 }
 

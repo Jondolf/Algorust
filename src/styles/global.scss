@@ -16,12 +16,27 @@
   display: flex;
 
   .sidebar {
-    width: 25%;
+    position: relative;
     height: 100%;
-    padding: 1.5rem;
+    padding: 1.5rem 0;
+    overflow: auto;
     background-color: hsl(200, 10%, 10%);
     color: white;
     box-sizing: border-box;
+    overflow: hidden;
+    white-space: nowrap;
+
+    h2,
+    .config-section {
+      padding: 0 1.5rem;
+    }
+
+    .resize-handle {
+      top: 0;
+      right: 0;
+      bottom: 0;
+      cursor: ew-resize;
+    }
 
     > h2 {
       height: 3rem;
@@ -30,7 +45,7 @@
   }
 
   main {
-    width: 75%;
+    width: 100%;
     max-height: 100%;
     padding: 0 1.5rem;
     overflow: auto;
@@ -54,6 +69,18 @@
   }
 }
 
+.resize-handle {
+  position: absolute;
+  width: 4px;
+  background: #adff2f;
+  opacity: 0;
+  transition: opacity 150ms ease;
+
+  &:hover {
+    opacity: 0.5;
+  }
+}
+
 button,
 input,
 select {
@@ -61,12 +88,12 @@ select {
   outline: none;
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 .input {
   position: relative;
   width: 100%;
-  margin-right: 1rem;
   margin-bottom: 1rem;
 
   button,
@@ -82,8 +109,8 @@ select {
 
     input {
       margin-right: 0.5rem;
-      width: initial;
-      height: 100%;
+      width: 0.7rem;
+      height: 0.7rem;
     }
     label {
       position: static;
@@ -149,9 +176,10 @@ input[type="range"] {
   height: 1.25rem;
 }
 
-.collapsible {
-  width: 100%;
-  margin: 1em 0;
+.collapsible.config-section > summary {
+  font-weight: bold;
+  user-select: none;
+  padding: 0.5rem 0;
 }
 
 pre {

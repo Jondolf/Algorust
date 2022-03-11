@@ -1,4 +1,3 @@
-use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_router::{history::History, hooks::use_history};
 
@@ -43,31 +42,11 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
         let config = config.clone();
         let update_config = update_config.clone();
 
-        Callback::from(move |e: InputEvent| {
-            let el: HtmlInputElement = e.target_unchecked_into();
-            if let Ok(input_len) = el.value().parse::<usize>() {
-                if input_len > 1 && input_len != config.input_len {
-                    update_config.emit((
-                        SortConfig {
-                            input_len,
-                            ..config.clone()
-                        },
-                        true,
-                    ));
-                }
-            }
-        })
-    };
-    let change_playback_time = {
-        let config = config.clone();
-        let update_config = update_config.clone();
-
-        Callback::from(move |e: InputEvent| {
-            let el: HtmlInputElement = e.target_unchecked_into();
-            if let Ok(playback_time) = el.value().parse::<f32>() {
+        Callback::from(move |input_len| {
+            if input_len > 1 && input_len != config.input_len {
                 update_config.emit((
                     SortConfig {
-                        playback_time,
+                        input_len,
                         ..config.clone()
                     },
                     true,
@@ -75,25 +54,24 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
             }
         })
     };
-    let change_algorithm = Callback::from(move |e: Event| {
-        let el: HtmlInputElement = e.target_unchecked_into();
-        history.push(SortingAlgorithmsRoute::SortingAlgorithm {
-            algorithm: el.value().replace(" ", "-").to_lowercase(),
-        });
-    });
-    let toggle_audio = {
+    let change_playback_time = {
         let config = config.clone();
 
-        Callback::from(move |_| {
+        Callback::from(move |playback_time| {
             update_config.emit((
                 SortConfig {
-                    audio_enabled: !config.audio_enabled,
+                    playback_time,
                     ..config.clone()
                 },
-                false,
+                true,
             ));
         })
     };
+    let change_algorithm = Callback::from(move |algorithm: String| {
+        history.push(SortingAlgorithmsRoute::SortingAlgorithm {
+            algorithm: algorithm.replace(" ", "-").to_lowercase(),
+        });
+    });
 
     html! {
         <div class="sort-controls">
@@ -116,7 +94,6 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
                 selected_value={config.sorting_algorithm.name}
                 onchange={change_algorithm}
             />
-            <Checkbox title="Audio enabled" value={config.audio_enabled} oninput={toggle_audio} />
         </div>
     }
 }

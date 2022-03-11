@@ -3,6 +3,8 @@ use yew::prelude::*;
 #[derive(Properties, PartialEq)]
 pub struct CollapsibleProps {
     pub children: Children,
+    #[prop_or_default]
+    pub class: Classes,
     pub title: String,
     pub open: bool,
 }
@@ -19,7 +21,7 @@ pub fn collapsible(props: &CollapsibleProps) -> Html {
     };
 
     html! {
-      <details class="collapsible" open={*open}>
+      <details class={classes!("collapsible", props.class.clone())} open={*open}>
         <summary {onclick}>{props.title.to_string()}</summary>
         {
           if *open {
