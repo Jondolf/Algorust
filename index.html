@@ -8,8 +8,28 @@
       name="description"
       content="Algorithms with interactive visualizations made in the Rust programming language."
     />
+    <meta name="theme-color" content="#adff2d" />
+
+    <link data-trunk rel="copy-file" href="/manifest.json" />
+    <link data-trunk rel="copy-file" href="/service-worker.js" />
+    <link data-trunk rel="copy-dir" href="/assets" />
     <link data-trunk rel="sass" href="src/styles/global.scss" as="style" />
     <link data-trunk rel="copy-dir" href="src/sorting_algorithms/src/" />
+
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/ico-icon" href="/assets/images/icons/favicon.ico" />
+    <link rel="apple-touch-icon" href="/assets/images/icons/icon-192x192.png" />
+
+    <script>
+      // Register ServiceWorker
+      window.onload = () => {
+        "use strict";
+
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.register("/service-worker.js");
+        }
+      };
+    </script>
 
     <title>Sorting Algorithms</title>
 
