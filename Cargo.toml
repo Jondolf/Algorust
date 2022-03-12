@@ -28,12 +28,14 @@ version = "0.3.56"
 features = [
   "HtmlCanvasElement",
   "CanvasRenderingContext2d",
-  'AudioContext',
-  'AudioDestinationNode',
-  'AudioNode',
-  'AudioParam',
-  'DynamicsCompressorNode',
-  'GainNode',
-  'OscillatorNode',
-  'OscillatorType',
+  "AudioContext",
+  "AudioDestinationNode",
+  "AudioNode",
+  "AudioParam",
+  "DynamicsCompressorNode",
+  "GainNode",
+  "OscillatorNode",
+  "OscillatorType",
+  "TouchList",
+  "Touch"
 ]
