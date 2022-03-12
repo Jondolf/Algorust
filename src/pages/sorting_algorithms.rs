@@ -17,6 +17,7 @@ use sorting_algorithms::*;
 use std::{borrow::Borrow, collections::BTreeMap};
 use web_sys::window;
 use yew::prelude::*;
+use yew_hooks::use_title;
 use yew_router::prelude::*;
 
 type SortSteps = Vec<Vec<SortCommand<u32>>>;
@@ -252,6 +253,11 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
         );
     }
 
+    use_title(format!(
+        "{} - Sorting algorithms",
+        config.sorting_algorithm.name.to_string()
+    ));
+
     use_sort_audio(
         output_at_active_step.to_vec(),
         active_step.clone(),
@@ -338,6 +344,8 @@ struct SortingAlgorithms404PageProps {
 
 #[function_component(SortingAlgorithms404Page)]
 fn sorting_algorithms_404_page(props: &SortingAlgorithms404PageProps) -> Html {
+    use_title("404 - Sorting algorithms".to_string());
+
     html! {
         <>
             <h1>{ "404" }</h1>
