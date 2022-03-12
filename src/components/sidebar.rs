@@ -95,8 +95,7 @@ pub fn sidebar(props: &SidebarProps) -> Html {
         use_effect_with_deps(
             move |(x, y, win_width, win_height)| {
                 let (new_width, new_height) = (*x, *win_height as i32 - *y);
-                let (max_width, max_height) =
-                    ((win_width * 0.75) as i32, (win_height * 0.75) as i32);
+                let (max_width, max_height) = ((win_width * 0.75) as i32, *win_height as i32);
                 let min = RESIZE_HANDLE_THICKNESS_PX;
 
                 if *width_px > max_width && *win_width >= MOBILE_MODE_THRESHOLD as f64 {

@@ -35,6 +35,11 @@ $sidebar-resize-handle-thickness: 4px;
       overflow-x: hidden;
       overflow-y: auto;
 
+      &::-webkit-scrollbar-thumb {
+        background: hsl(200, 10%, 15%);
+        border: 0.3em solid hsl(200, 15%, 10%);
+      }
+
       > :first-child {
         padding: 1.5rem 1.5rem 0 1.5rem;
         margin: 0;
@@ -245,7 +250,6 @@ table {
     .sidebar {
       max-width: 100vw;
       width: 100%;
-      max-height: 75vw;
       height: $sidebar-resize-handle-thickness;
 
       .resize-handle.resize-width {
