@@ -295,13 +295,15 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
                     />
 
                     <span class="step-info">
-                        {
-                            if *active_step_index == 0 {
-                                format!("Step {} (input)", *active_step_index)
-                            } else {
-                                format!("Step {}: ", *active_step_index)
+                        <label for="stepSlider">
+                            {
+                                if *active_step_index == 0 {
+                                    format!("Step {} (input)", *active_step_index)
+                                } else {
+                                    format!("Step {}: ", *active_step_index)
+                                }
                             }
-                        }
+                        </label>
                         {
                             active_step.iter().map(|command| match command {
                                 SortCommand::Swap(from, to) => format!("SWAP indices {} and {}", from, to),

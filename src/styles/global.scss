@@ -1,6 +1,7 @@
 @use "./sorting-algorithms.scss";
 
 $sidebar-resize-handle-thickness: 4px;
+$input-border-radius: 0.25rem;
 
 ::-webkit-scrollbar {
   background: transparent;
@@ -162,14 +163,15 @@ select {
     height: 3.25rem;
     padding: 0.3rem 0.5rem;
     border: 2px solid #bbb;
-    border-radius: 0.25rem;
+    border-radius: $input-border-radius;
     outline: none;
     background-color: hsl(200, 15%, 15%);
     box-sizing: border-box;
     font-size: 0.9em;
     transition: border 250ms ease;
 
-    &:active {
+    &:active,
+    &:focus {
       color: #adff2f;
       border: 2px solid #adff2f;
     }
@@ -179,10 +181,14 @@ select {
     position: absolute;
     top: 0.5em;
     left: 0.5rem;
+    right: 0.5rem;
     font-size: 0.75em;
     color: #adff2fbb;
     cursor: default;
     user-select: none;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   input,
@@ -191,12 +197,15 @@ select {
     height: 3.25rem;
     padding: 1rem 0.5rem 0.1rem 0.5rem;
     border: 2px solid #bbb;
-    border-radius: 0.25rem;
+    border-radius: $input-border-radius;
     outline: none;
     background-color: hsl(200, 15%, 15%);
     box-sizing: border-box;
     font-size: 0.9em;
     transition: border 250ms ease;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 
     &:focus {
       border: 2px solid #adff2f;
@@ -211,14 +220,31 @@ input[type="range"] {
   height: 1.25rem;
 }
 
-.collapsible > summary {
-  cursor: pointer;
-}
+details {
+  > summary {
+    margin: 0.25rem 0;
+    outline: none;
+    border: 2px solid transparent;
+    border-radius: $input-border-radius;
+    cursor: pointer;
+    transition: border 250ms ease;
 
-.collapsible.config-section > summary {
-  font-weight: bold;
-  user-select: none;
-  padding: 0.5rem 0;
+    &:focus-visible {
+      border: 2px solid #adff2f;
+    }
+  }
+
+  &.collapsible {
+    > :nth-child(2) {
+      margin-top: 0.5rem;
+    }
+
+    &.config-section > summary {
+      font-weight: bold;
+      user-select: none;
+      padding: 0.5rem 0;
+    }
+  }
 }
 
 pre {

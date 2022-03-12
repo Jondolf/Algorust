@@ -108,7 +108,7 @@ pub fn audio_controls(props: &AudioControlsProps) -> Html {
     };
 
     html! {
-        <div class="sort-controls">
+        <div class="audio-controls">
             <Checkbox title="Audio enabled" value={config.enabled} oninput={toggle_audio} />
             <SelectInput
                 title="Sound type"

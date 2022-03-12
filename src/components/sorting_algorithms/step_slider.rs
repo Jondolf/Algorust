@@ -108,7 +108,7 @@ pub fn step_slider(props: &StepSliderProps) -> Html {
             { playback_button(on_click_playback_button, playing) }
             <input
                 type="range"
-                id="active-step-input"
+                id="stepSlider"
                 min="0"
                 max={max.to_string()}
                 value={active_step_index.to_string()}
@@ -120,7 +120,7 @@ pub fn step_slider(props: &StepSliderProps) -> Html {
 
 fn playback_button(onclick: Callback<MouseEvent>, playing: bool) -> Html {
     html! {
-        <button {onclick}>
+        <button aria-label="Step playback button" {onclick}>
             {
                 if playing {
                     html! {
