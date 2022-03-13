@@ -40,14 +40,21 @@
         min-height: 100vh;
       }
 
+      html {
+        --color-accent: #bbff33;
+        --color-accent-hsl: 80, 100%, 60%;
+        --bg-color-1: hsl(200, 10%, 15%);
+        --bg-color-2: hsl(200, 15%, 10%);
+      }
+
       body {
-        background-color: hsl(200, 10%, 15%);
+        background-color: var(--bg-color-1);
         color: white;
         box-sizing: border-box;
       }
 
       ::selection {
-        background-color: #adff2faa;
+        background-color: hsla(var(--color-accent-hsl), 50%);
         color: white;
       }
 
