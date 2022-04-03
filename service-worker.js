@@ -1,5 +1,5 @@
 const cacheName = "algorithms";
-const filesToCache = ["/index.html", "/index-1940e887830c7517_bg.wasm"];
+const filesToCache = ["/index.html", "/global.css"];
 
 // Start the service worker and cache all of the app's content
 self.addEventListener("install", function (e) {
