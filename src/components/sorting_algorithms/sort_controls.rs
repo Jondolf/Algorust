@@ -69,7 +69,7 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
     };
     let change_algorithm = Callback::from(move |algorithm: String| {
         history.push(SortingAlgorithmsRoute::SortingAlgorithm {
-            algorithm: algorithm.replace(" ", "-").to_lowercase(),
+            algorithm: algorithm.replace(' ', "-").to_lowercase(),
         });
     });
 

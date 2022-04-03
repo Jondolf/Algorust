@@ -1,11 +1,10 @@
 [package]
-name = "sorting_algorithms"
+name = "pathfinding"
 version = "0.1.0"
-edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+edition = "2021"
 
 [dependencies]
 wasm-logger = "0.2.0"
 log = "0.4.14"
 instant = { version = "0.1.11", features = ["wasm-bindgen"] }
+rand = "0.8.5"

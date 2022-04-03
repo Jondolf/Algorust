@@ -1,4 +1,5 @@
 @use "./sorting-algorithms.scss";
+@use "./pathfinding.scss";
 
 $sidebar-resize-handle-thickness: 4px;
 $input-border-radius: 0.25rem;
@@ -13,9 +14,42 @@ $input-border-radius: 0.25rem;
   border-radius: 0.5em;
 }
 
+.top-bar {
+  height: var(--top-bar-height);
+  background-color: var(--bg-color-2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  box-sizing: border-box;
+
+  .page-links {
+    display: flex;
+    align-items: center;
+
+    a {
+      margin-right: 1.5rem;
+      text-decoration: none;
+      transition: color 150ms ease;
+
+      &:hover {
+        color: var(--color-accent);
+      }
+    }
+  }
+
+  .other-links {
+    height: 100%;
+
+    img {
+      height: 100%;
+    }
+  }
+}
+
 .page {
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - var(--top-bar-height));
   display: flex;
 
   .sidebar {
@@ -23,7 +57,7 @@ $input-border-radius: 0.25rem;
     max-width: 75vw;
     // Allow the sidebar to become this small. min-width (inline style) sets the actual width.
     width: $sidebar-resize-handle-thickness;
-    max-height: 100vh;
+    max-height: 100vh - var(--top-bar-height);
     height: 100%;
     overflow: auto;
     background-color: var(--bg-color-2);
@@ -73,31 +107,32 @@ $input-border-radius: 0.25rem;
       cursor: ns-resize;
     }
 
-    > h2 {
+    >h2 {
       height: 3rem;
       margin: 0;
     }
   }
 
   main {
+    --main-padding: 1.5rem;
     width: 100%;
     max-height: 100%;
-    padding: 0 1.5rem;
+    padding: var(--main-padding);
     box-sizing: border-box;
     overflow: auto;
 
     .visualization {
+      --step-slider-height: 2.5rem;
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      padding: 1.5rem 0;
       box-sizing: border-box;
+      max-height: calc(100vh - var(--top-bar-height) - calc(var(--main-padding) * 2));
 
       * {
         box-sizing: border-box;
       }
 
-      > h2 {
+      >h2 {
         height: 3rem;
         margin: 0;
       }
@@ -148,6 +183,7 @@ select {
       width: 0.7rem;
       height: 0.7rem;
     }
+
     label {
       position: static;
       display: inline-flex;
@@ -221,8 +257,46 @@ input[type="range"] {
   height: 1.25rem;
 }
 
+.step-slider {
+  height: var(--step-slider-height);
+  display: flex;
+  align-items: center;
+
+  button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-right: 0.5rem;
+    border: 2px solid transparent;
+    border-radius: 0.25rem;
+    transition: border 250ms ease;
+    cursor: pointer;
+
+    &:focus-visible {
+      border: 2px solid var(--color-accent);
+    }
+
+    svg {
+      width: 50%;
+      height: 50%;
+    }
+  }
+
+  input[type="range"] {
+    flex: 1;
+    outline: 2px solid transparent;
+    transition: outline 250ms ease;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-accent);
+    }
+  }
+}
+
 details {
-  > summary {
+  >summary {
     margin: 0.25rem 0;
     outline: none;
     border: 2px solid transparent;
@@ -240,7 +314,7 @@ details {
       margin-top: 0.5rem;
     }
 
-    &.config-section > summary {
+    &.config-section>summary {
       font-weight: bold;
       user-select: none;
       padding: 0.5rem 0;
@@ -273,6 +347,7 @@ table {
 @media only screen and (max-width: 800px) {
   .page {
     flex-direction: column-reverse;
+    justify-content: space-between;
 
     .sidebar {
       max-width: 100vw;
@@ -282,6 +357,7 @@ table {
       .resize-handle.resize-width {
         display: none;
       }
+
       .resize-handle.resize-height {
         display: block;
       }

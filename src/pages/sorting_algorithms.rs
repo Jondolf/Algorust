@@ -7,8 +7,8 @@ use crate::{
             sort_controls::SortControls,
             sort_desc::SortDesc,
             sort_graph::SortGraph,
-            step_slider::StepSlider,
         },
+        step_slider::StepSlider,
     },
     hooks::use_sort_audio::use_sort_audio,
     utils::{gen_u32_vec, knuth_shuffle},
@@ -255,7 +255,7 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
 
     use_title(format!(
         "{} - Sorting algorithms",
-        config.sorting_algorithm.name.to_string()
+        config.sorting_algorithm.name
     ));
 
     use_sort_audio(
@@ -280,7 +280,7 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
 
             <main>
                 <div class="visualization">
-                    <h2>{ format!("{} steps, {}", output.steps.len(), format!("{:?} ms", &output.duration.unwrap().as_millis())) }</h2>
+                    <h2>{ format!("{} steps, {:?} ms", output.steps.len(), &output.duration.unwrap().as_millis()) }</h2>
 
                     <SortGraph
                         items={output_at_active_step.to_vec()}
@@ -335,7 +335,7 @@ fn get_sort_desc_url(algorithm_name: &str) -> String {
     format!(
         "{}/src/{}/README.md",
         origin,
-        algorithm_name.to_lowercase().replace(" ", "_")
+        algorithm_name.to_lowercase().replace(' ', "_")
     )
 }
 

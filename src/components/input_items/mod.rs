@@ -12,5 +12,5 @@ use regex::Regex;
 
 pub fn input_title_to_id(title: &str) -> String {
     let reg = Regex::new(r"[^A-Za-z_]").unwrap();
-    reg.replace_all(&title.replace(" ", "_"), "").to_lowercase()
+    reg.replace_all(&title.replace(' ', "_"), "").to_lowercase()
 }

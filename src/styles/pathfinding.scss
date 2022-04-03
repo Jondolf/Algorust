@@ -1,0 +1,103 @@
+#Pathfinding {
+  .path-grid {
+    display: grid;
+    width: 100%;
+    max-height: calc(100vh - var(--top-bar-height) - calc(var(--main-padding) * 2) - var(--step-slider-height) - 3.5rem);
+    margin: auto;
+    background-color: var(--bg-color-1);
+
+    .grid-cell {
+      aspect-ratio: 1/1;
+      box-sizing: border-box;
+      outline: 1px solid hsla(0, 0%, 50%, 20%);
+
+      &.start {
+        transform: scale(0.6);
+        background-color: var(--color-accent);
+      }
+
+      &.end {
+        transform: scale(0.6);
+        background-color: orangered;
+      }
+
+      &.wall {
+        background-color: #ccc;
+        outline: none;
+      }
+
+      &.path {
+        transform: scale(0.6);
+        background-color: yellow;
+      }
+
+      &.unvisited {
+        background-color: transparent;
+      }
+
+      &.visited {
+        background-color: #0066ff99;
+      }
+
+      &.new-visited {
+        background-color: #00bbff;
+      }
+    }
+  }
+
+  .path-toolbar {
+    display: flex;
+    width: 100%;
+    height: 3.5rem;
+
+    .toolbar-button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      font-size: 1.5rem;
+      margin-right: 0.5rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+
+      &.active {
+        background-color: var(--bg-color-2);
+      }
+    }
+  }
+
+  @keyframes path {
+    0% {
+      background-color: blue;
+    }
+
+    100% {
+      background-color: orange;
+    }
+  }
+
+  @keyframes visited {
+    0% {
+      transform: scale(0.3);
+      background-color: rgba(0, 217, 159);
+    }
+
+    100% {
+      transform: scale(1);
+      background-color: blue;
+    }
+  }
+
+  @keyframes newVisited {
+    0% {
+      transform: scale(0.3);
+      background-color: white;
+    }
+
+    100% {
+      transform: scale(1);
+      background-color: rgba(0, 217, 159);
+    }
+  }
+}

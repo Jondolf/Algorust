@@ -23,6 +23,9 @@ getrandom = { version = "0.2.3", features = ["js"] }
 [dependencies.sorting_algorithms]
 path = "./src/sorting_algorithms"
 
+[dependencies.pathfinding]
+path = "./src/pathfinding"
+
 [dependencies.web-sys]
 version = "0.3.56"
 features = [
