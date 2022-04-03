@@ -63,6 +63,7 @@ pub fn get_pathfinding_algorithms() -> BTreeMap<&'static str, PathfindingAlgorit
             "dijkstra",
             PathfindingAlgorithm::new("Dijkstra", algorithms::dijkstra),
         ),
+        ("dfs", PathfindingAlgorithm::new("DFS", algorithms::dfs)),
     ])
 }
 
