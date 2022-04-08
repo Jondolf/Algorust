@@ -32,12 +32,12 @@ pub fn path_grid(props: &PathGridProps) -> Html {
         ..
     } = props.clone();
     let (start, end) = (props.start.name, props.end.name);
-    let onmouseover = move |e: MouseEvent, x, y| {
+    let onmouseover = Callback::from(move |(e, x, y): (MouseEvent, isize, isize)| {
         e.prevent_default();
         if e.buttons() == 1 {
             on_cell_click.emit(Vertex::new(Coord::new(x, y)));
         }
-    };
+    });
     let path_str = use_state_eq(String::new);
 
     {
@@ -75,50 +75,19 @@ pub fn path_grid(props: &PathGridProps) -> Html {
             <svg viewBox={format!("0 0 {} {}", width * SCALE, height * SCALE)} xmlns="http://www.w3.org/2000/svg">
                 // Start, end and visited cells
                 {
-                    for (0..height as usize).map(|y| html! {
-                        for (0..width as usize).map(|x| {
-                            let onmouseover = {
-                                let onmouseover = onmouseover.clone();
-                                move |e| onmouseover(e, x as isize, y as isize)
-                            };
-                            if let Some((vertex, state)) = graph.get_key_value(&Vertex::new(Coord::new(x as isize, y as isize))) {
+                    for (0..height as isize).map(|y| html! {
+                        for (0..width as isize).map(|x| {
+                            if let Some((vertex, state)) = graph.get_key_value(&Vertex::new(Coord::new(x, y))) {
                                 if *vertex != props.start && *vertex != props.end {
                                     match state {
                                         VertexState::NotVisited => html! {
-                                            <rect
-                                                class="grid-cell unvisited"
-                                                key={format!("{},{}", x, y)}
-                                                x={(x * SCALE).to_string()}
-                                                y={(y * SCALE).to_string()}
-                                                width={SCALE.to_string()}
-                                                height={SCALE.to_string()}
-                                                onmousedown={onmouseover.clone()}
-                                                onmouseover={onmouseover.clone()}
-                                            />
+                                            <GridCell class="unvisited" {x} {y} onmouseover={onmouseover.clone()} />
                                         },
                                         VertexState::NewVisited => html! {
-                                            <rect
-                                                class="grid-cell new-visited"
-                                                key={format!("{},{}", x, y)}
-                                                x={(x * SCALE).to_string()}
-                                                y={(y * SCALE).to_string()}
-                                                width={SCALE.to_string()}
-                                                height={SCALE.to_string()}
-                                                onmousedown={onmouseover.clone()}
-                                                onmouseover={onmouseover.clone()}
-                                            />
+                                            <GridCell class="new-visited" {x} {y} onmouseover={onmouseover.clone()} />
                                         },
                                         VertexState::Visited => html! {
-                                            <rect
-                                                class="grid-cell visited"
-                                                key={format!("{},{}", x, y)}
-                                                x={(x * SCALE).to_string()}
-                                                y={(y * SCALE).to_string()}
-                                                width={SCALE.to_string()}
-                                                height={SCALE.to_string()}
-                                                onmousedown={onmouseover.clone()}
-                                                onmouseover={onmouseover.clone()}
-                                            />
+                                            <GridCell class="visited" {x} {y} onmouseover={onmouseover.clone()} />
                                         },
                                     }
                                 } else {
@@ -134,62 +103,48 @@ pub fn path_grid(props: &PathGridProps) -> Html {
                 // Walls
                 {
                     for walls.into_iter().map(|vertex| {
-                        let (x, y) = (vertex.name.x as usize, vertex.name.y as usize);
-                        let onmouseover = {
-                            let onmouseover = onmouseover.clone();
-                            move |e| onmouseover(e, x as isize, y as isize)
-                        };
-
+                        let (x, y) = (vertex.name.x, vertex.name.y);
                         html! {
-                            <rect
-                                class="grid-cell wall"
-                                key={format!("{},{}", x, y)}
-                                x={(x * SCALE).to_string()}
-                                y={(y * SCALE).to_string()}
-                                width={SCALE.to_string()}
-                                height={SCALE.to_string()}
-                                onmousedown={onmouseover.clone()}
-                                onmouseover={onmouseover.clone()}
-                            />
+                            <GridCell class="wall" {x} {y} onmouseover={onmouseover.clone()} />
                         }
                     })
                 }
 
                 <path class="path" d={(*path_str).clone()} stroke-width={(SCALE  / 2).to_string()} />
 
-                <rect
-                    class="grid-cell start"
-                    key={format!("{},{}", start.x, start.y)}
-                    x={(start.x as usize * SCALE).to_string()}
-                    y={(start.y as usize * SCALE).to_string()}
-                    width={SCALE.to_string()}
-                    height={SCALE.to_string()}
-                    onmousedown={{
-                            let onmouseover = onmouseover.clone();
-                            move |e| onmouseover(e, start.x, start.y)
-                    }}
-                    onmouseover={{
-                            let onmouseover = onmouseover.clone();
-                            move |e| onmouseover(e, start.x, start.y)
-                    }}
-                />
-                <rect
-                    class="grid-cell end"
-                    key={format!("{},{}", end.x, end.y)}
-                    x={(end.x as usize * SCALE).to_string()}
-                    y={(end.y as usize * SCALE).to_string()}
-                    width={SCALE.to_string()}
-                    height={SCALE.to_string()}
-                    onmousedown={{
-                            let onmouseover = onmouseover.clone();
-                            move |e| onmouseover(e, end.x, end.y)
-                    }}
-                    onmouseover={{
-                            let onmouseover = onmouseover.clone();
-                            move |e| onmouseover(e, end.x, end.y)
-                    }}
-                />
+                <GridCell class="start" x={start.x} y={start.y} onmouseover={onmouseover.clone()} />
+                <GridCell class="end" x={end.x} y={end.y} onmouseover={onmouseover.clone()} />
             </svg>
         </div>
+    }
+}
+
+#[derive(Properties, Clone, PartialEq)]
+struct GridCellProps {
+    x: isize,
+    y: isize,
+    onmouseover: Callback<(MouseEvent, isize, isize)>,
+    class: Classes,
+}
+
+#[function_component(GridCell)]
+fn grid_cell(props: &GridCellProps) -> Html {
+    let (x, y) = (props.x, props.y);
+    let onmouseover = {
+        let onmouseover = props.onmouseover.clone();
+        move |e| onmouseover.emit((e, x, y))
+    };
+
+    html! {
+        <rect
+            class={classes!("grid-cell", props.class.clone())}
+            key={format!("{},{}", x, y)}
+            x={(x as usize * SCALE).to_string()}
+            y={(y as usize * SCALE).to_string()}
+            width={SCALE.to_string()}
+            height={SCALE.to_string()}
+            onmousedown={onmouseover.clone()}
+            onmouseover={onmouseover}
+        />
     }
 }
