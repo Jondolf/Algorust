@@ -12,25 +12,25 @@ use pathfinding::{
     graph::{AdjacencyList, Vertex},
     run_pathfinding, Coord, PathfindingResult, PathfindingStep, PathfindingSteps, VertexState,
 };
-use std::collections::{BTreeMap, BTreeSet};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fmt::{Debug, Display},
+    hash::Hash,
+};
 use yew::prelude::*;
 use yew_hooks::use_title;
 use yew_router::prelude::*;
 
-type PathfindingFunc = fn(
-    AdjacencyList<Coord, isize>,
-    Vertex<Coord>,
-    Vertex<Coord>,
-    PathfindingSteps<Coord>,
-) -> PathfindingResult<Coord>;
+type PathfindingFunc<V, E> =
+    fn(AdjacencyList<V, E>, Vertex<V>, Vertex<V>, PathfindingSteps<V>) -> PathfindingResult<V, E>;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct PathfindingAlgorithm {
+pub struct PathfindingAlgorithm<V: Copy + Debug + Display + Ord + Hash, E: Clone> {
     pub name: String,
-    find_path: PathfindingFunc,
+    find_path: PathfindingFunc<V, E>,
 }
-impl PathfindingAlgorithm {
-    fn new(name: &str, find_path: PathfindingFunc) -> Self {
+impl<V: Copy + Debug + Display + Ord + Hash, E: Clone> PathfindingAlgorithm<V, E> {
+    pub fn new(name: &str, find_path: PathfindingFunc<V, E>) -> Self {
         Self {
             name: name.to_string(),
             find_path,
@@ -38,16 +38,16 @@ impl PathfindingAlgorithm {
     }
     /// Finds a path from `start` to `end`.
     /// The path is not guaranteed to be the shortest path depending on the algorithm.
-    fn find_path(
+    pub fn find_path(
         &self,
-        graph: &AdjacencyList<Coord, isize>,
-        start: Vertex<Coord>,
-        end: Vertex<Coord>,
-    ) -> (PathfindingResult<Coord>, instant::Duration) {
+        graph: &AdjacencyList<V, E>,
+        start: Vertex<V>,
+        end: Vertex<V>,
+    ) -> (PathfindingResult<V, E>, instant::Duration) {
         run_pathfinding(graph, start, end, self.find_path)
     }
 }
-impl Default for PathfindingAlgorithm {
+impl Default for PathfindingAlgorithm<Coord, isize> {
     fn default() -> Self {
         Self {
             name: String::from("Dijkstra"),
@@ -56,14 +56,22 @@ impl Default for PathfindingAlgorithm {
     }
 }
 
-pub fn get_pathfinding_algorithms() -> BTreeMap<&'static str, PathfindingAlgorithm> {
+pub fn get_pathfinding_algorithms<V, E>() -> BTreeMap<&'static str, PathfindingAlgorithm<V, E>>
+where
+    V: Copy + Debug + Display + Ord + Hash,
+    E: Clone + Ord + From<isize>,
+    isize: From<E>,
+{
     // `BTreeMap` because it keeps the order of the items.
     BTreeMap::from([
         (
             "dijkstra",
-            PathfindingAlgorithm::new("Dijkstra", algorithms::dijkstra),
+            PathfindingAlgorithm::new("Dijkstra", algorithms::dijkstra::<V, E>),
         ),
-        ("dfs", PathfindingAlgorithm::new("DFS", algorithms::dfs)),
+        (
+            "dfs",
+            PathfindingAlgorithm::new("DFS", algorithms::dfs::<V, E>),
+        ),
     ])
 }
 
@@ -81,7 +89,7 @@ pub fn switch_pathfinding(route: &PathfindingRoute) -> Html {
             <Redirect<PathfindingRoute> to={PathfindingRoute::PathfindingAlgorithm { algorithm: "dfs".to_string()} } />
         },
         PathfindingRoute::PathfindingAlgorithm { algorithm } => {
-            if get_pathfinding_algorithms().contains_key(algorithm.as_str()) {
+            if get_pathfinding_algorithms::<Coord, isize>().contains_key(algorithm.as_str()) {
                 html! {
                     <PathfindingPage algorithm={algorithm.to_string()} />
                 }
@@ -96,7 +104,7 @@ pub fn switch_pathfinding(route: &PathfindingRoute) -> Html {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct PathfindingConfig {
-    pub algorithm: PathfindingAlgorithm,
+    pub algorithm: PathfindingAlgorithm<Coord, isize>,
     pub graph_width: usize,
     pub graph_height: usize,
     pub move_diagonally: bool,
@@ -146,33 +154,34 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
         })
     };
 
+    let walls = use_state(BTreeSet::<Vertex<Coord>>::new);
     let graph = use_state(|| {
         generate_graph(
             config.graph_width,
             config.graph_height,
             config.move_diagonally,
+            (*walls).clone(),
         )
     });
-    let path = use_state(BTreeSet::<Vertex<Coord>>::new);
+    let path = use_state(Vec::<Vertex<Coord>>::new);
     let steps = use_state(Vec::<PathfindingStep<Coord>>::new);
     let active_step_index = use_state(|| 0);
     let graph_at_active_step = use_state(BTreeMap::<Vertex<Coord>, VertexState>::new);
+    let paused = use_state_eq(|| false);
 
-    let update_graph_at_active_step = {
-        let steps = steps.clone();
-        let graph_at_active_step = graph_at_active_step.clone();
+    // If the new step count is lower than the current step index, the step index is set to the step count. Otherwise it will reset to the given index.
+    let update_or_reset_step_index = {
+        let step_count = steps.len();
+        let active_step_index = active_step_index.clone();
 
-        move |graph: &AdjacencyList<Coord, isize>, step_index| {
-            let mut new = BTreeMap::new();
-            for v in graph.hash_map.keys() {
-                new.insert(*v, VertexState::NotVisited);
-            }
-            for step in steps[0..step_index].iter() {
-                for (vertex, state) in step.states.iter() {
-                    new.insert(*vertex, *state);
-                }
-            }
-            graph_at_active_step.set(new);
+        move |new_step_count: usize, reset_to: usize| {
+            let new_active_step_index = if *active_step_index >= step_count {
+                new_step_count
+            } else {
+                reset_to
+            };
+            active_step_index.set(new_active_step_index);
+            new_active_step_index
         }
     };
 
@@ -180,29 +189,35 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
         let steps = steps.clone();
         let path = path.clone();
         let (start, end) = (config.start, config.end);
-        let active_step_index = active_step_index.clone();
-        let update_graph_at_active_step = update_graph_at_active_step.clone();
+        let graph_at_active_step = graph_at_active_step.clone();
+        let update_or_reset_step_index = update_or_reset_step_index.clone();
 
         move |graph: &AdjacencyList<Coord, isize>, config: &PathfindingConfig| {
             let (res, _) = config.algorithm.find_path(graph, start, end);
-            path.set(res.path);
-            steps.set(res.steps.get_all());
-            update_graph_at_active_step(graph, *active_step_index);
+            let new_steps = res.steps.clone().get_all();
+            let new_active_step_index = update_or_reset_step_index(new_steps.len(), 0);
+            graph_at_active_step.set(get_graph_at_step(graph, &new_steps, new_active_step_index));
+            path.set(res.path.clone());
+            steps.set(new_steps);
+            res
         }
     };
 
     let update_config = {
         let config = config.clone();
         let graph = graph.clone();
+        let walls = walls.clone();
+        let steps = steps.clone();
         let active_step_index = active_step_index.clone();
+        let graph_at_active_step = graph_at_active_step.clone();
+        let update_or_reset_step_index = update_or_reset_step_index.clone();
         let update_path = update_path.clone();
-        let update_graph_at_active_step = update_graph_at_active_step.clone();
 
         Callback::from(
             move |(new_config, update_type): (PathfindingConfig, PathfindingConfigUpdate)| {
                 match update_type {
                     PathfindingConfigUpdate::UpdatePath => {
-                        update_path(&*graph, &new_config);
+                        update_path(&graph, &new_config);
                         active_step_index.set(0);
                     }
                     PathfindingConfigUpdate::UpdatePathAndGraph => {
@@ -210,11 +225,17 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
                             new_config.graph_width,
                             new_config.graph_height,
                             new_config.move_diagonally,
+                            (*walls).clone(),
                         );
-                        update_path(&new_graph, &new_config);
-                        update_graph_at_active_step(&new_graph, 0);
+                        let res = update_path(&new_graph, &new_config);
+                        let new_active_step_index = update_or_reset_step_index(res.steps.len(), 0);
+
+                        graph_at_active_step.set(get_graph_at_step(
+                            &new_graph,
+                            &*steps,
+                            new_active_step_index,
+                        ));
                         graph.set(new_graph);
-                        active_step_index.set(0);
                     }
                     PathfindingConfigUpdate::NoUpdate => (),
                 }
@@ -226,19 +247,16 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
     {
         let (start, end) = (config.start, config.end);
         let config = (*config).clone();
+        let algorithm = config.algorithm.clone();
         let graph = graph.clone();
         let update_path = update_path.clone();
-        let active_step_index = active_step_index.clone();
-        let update_graph_at_active_step = update_graph_at_active_step.clone();
 
         use_effect_with_deps(
             move |_| {
                 update_path(&*graph, &config);
-                update_graph_at_active_step(&*graph, 0);
-                active_step_index.set(0);
                 || ()
             },
-            (start, end),
+            (start, end, algorithm),
         )
     }
 
@@ -248,7 +266,8 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
         let config = config.clone();
         let update_config = update_config.clone();
         let graph = graph.clone();
-        let update_graph_at_active_step = update_graph_at_active_step.clone();
+        let graph_at_active_step = graph_at_active_step.clone();
+        let steps = steps.clone();
 
         use_effect_with_deps(
             move |route| {
@@ -264,7 +283,7 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
                         },
                         PathfindingConfigUpdate::UpdatePath,
                     ));
-                    update_graph_at_active_step(&*graph, 0);
+                    graph_at_active_step.set(get_graph_at_step(&*graph, &*steps, 0));
                 } else {
                     update_config.emit(((*config).clone(), PathfindingConfigUpdate::NoUpdate));
                 };
@@ -278,12 +297,13 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
 
     let change_step = {
         let graph = graph.clone();
+        let graph_at_active_step = graph_at_active_step.clone();
+        let steps = steps.clone();
         let active_step_index = active_step_index.clone();
-        let update_graph_at_active_step = update_graph_at_active_step.clone();
 
         Callback::from(move |val| {
             active_step_index.set(val);
-            update_graph_at_active_step(&*graph, val);
+            graph_at_active_step.set(get_graph_at_step(&graph, &*steps, val));
         })
     };
 
@@ -299,7 +319,9 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
 
     let on_cell_click = {
         let config = config.clone();
-        let active_step_index = active_step_index.clone();
+        let graph = graph.clone();
+        let walls = walls.clone();
+        let paused = paused.clone();
 
         Callback::from(move |vertex| {
             if vertex != config.start && vertex != config.end {
@@ -318,32 +340,48 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
                             });
                         }
                         PathTool::Wall => {
-                            let mut new_graph = (*graph).clone();
-                            new_graph.remove_vertex(&vertex);
-                            update_path(&new_graph, &config);
-                            update_graph_at_active_step(&new_graph, 0);
-                            active_step_index.set(0);
-                            graph.set(new_graph);
+                            let mut new_walls = (*walls).clone();
+                            new_walls.insert(vertex);
+                            walls.set(new_walls);
+                            paused.set(true);
                         }
                     }
                 } else if config.active_tool == PathTool::Wall {
-                    let mut new_graph = (*graph).clone();
-                    let vertex_cost = vertex.name.x + vertex.name.y;
-
-                    let mut neighbors = BTreeMap::new();
-                    for coord in vertex.name.adjacent(config.move_diagonally) {
-                        if new_graph.hash_map.contains_key(&Vertex::new(coord)) {
-                            neighbors.insert(Vertex::new(coord), vertex_cost + coord.x + coord.y);
-                        }
-                    }
-
-                    new_graph.add_vertex_with_undirected_edges(vertex, neighbors);
-                    update_path(&new_graph, &config);
-                    update_graph_at_active_step(&new_graph, 0);
-                    active_step_index.set(0);
-                    graph.set(new_graph);
+                    let mut new_walls = (*walls).clone();
+                    new_walls.remove(&vertex);
+                    walls.set(new_walls);
+                    paused.set(true);
                 }
             }
+        })
+    };
+    let on_draw_end = {
+        let config = config.clone();
+        let steps = steps.clone();
+        let graph_at_active_step = graph_at_active_step.clone();
+        let walls = walls.clone();
+        let paused = paused.clone();
+
+        Callback::from(move |_| {
+            if config.active_tool == PathTool::Wall {
+                let new_graph = generate_graph(
+                    config.graph_width,
+                    config.graph_height,
+                    config.move_diagonally,
+                    (*walls).clone(),
+                );
+
+                let res = update_path(&new_graph, &config);
+                let new_active_step_index = update_or_reset_step_index(res.steps.len(), 0);
+
+                graph_at_active_step.set(get_graph_at_step(
+                    &new_graph,
+                    &*steps,
+                    new_active_step_index,
+                ));
+                graph.set(new_graph);
+            }
+            paused.set(false);
         })
     };
 
@@ -364,16 +402,18 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
                         width={config.graph_width}
                         height={config.graph_height}
                         graph={(*graph_at_active_step).clone()}
+                        walls={(*walls).clone()}
                         path={
                             if *active_step_index >= steps.len() {
                                 (*path).clone()
                             } else {
-                                BTreeSet::new()
+                                Vec::new()
                             }
                         }
                         start={config.start}
                         end={config.end}
                         {on_cell_click}
+                        {on_draw_end}
                     />
 
                     <StepSlider
@@ -381,11 +421,29 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
                         max={steps.len()}
                         on_change={change_step}
                         playback_time={config.playback_time}
+                        disabled={*paused}
                     />
                 </div>
             </main>
         </div>
     }
+}
+
+fn get_graph_at_step<V: Copy + Debug + Display + Ord + Hash, E: Clone>(
+    graph: &AdjacencyList<V, E>,
+    steps: &[PathfindingStep<V>],
+    step_index: usize,
+) -> BTreeMap<Vertex<V>, VertexState> {
+    let mut new = BTreeMap::new();
+    for v in graph.hash_map.keys() {
+        new.insert(*v, VertexState::NotVisited);
+    }
+    for step in steps[0..step_index.min(steps.len())].iter() {
+        for (vertex, state) in step.states.iter() {
+            new.insert(*vertex, *state);
+        }
+    }
+    new
 }
 
 #[derive(Clone, PartialEq, Properties)]

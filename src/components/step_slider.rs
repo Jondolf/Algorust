@@ -9,6 +9,8 @@ pub struct StepSliderProps {
     #[prop_or(10.0)]
     // How long it should take to play all steps in seconds.
     pub playback_time: f32,
+    #[prop_or(false)]
+    pub disabled: bool,
     pub on_change: Callback<usize>,
 }
 
@@ -18,6 +20,7 @@ pub fn step_slider(props: &StepSliderProps) -> Html {
         active_step_index,
         max,
         playback_time,
+        disabled,
         on_change,
     } = props.clone();
 
@@ -37,7 +40,7 @@ pub fn step_slider(props: &StepSliderProps) -> Html {
             move |_| {
                 let new_step_play_time_ms = playback_time / max as f32 * 1000.0;
                 step_play_time_ms.set(new_step_play_time_ms);
-                if playing {
+                if playing && !disabled {
                     interval_ms.set(new_step_play_time_ms.max(max_refresh_rate_ms) as u32);
                 }
                 || ()
@@ -54,6 +57,9 @@ pub fn step_slider(props: &StepSliderProps) -> Html {
 
         use_interval(
             move || {
+                if disabled {
+                    return;
+                }
                 if active_step_index >= max {
                     // Clear interval when the end is reached.
                     interval_ms.set(0);
@@ -96,7 +102,7 @@ pub fn step_slider(props: &StepSliderProps) -> Html {
     let pause_step_player = move || interval_ms.set(0);
 
     let on_click_playback_button = Callback::from(move |_| {
-        if playing {
+        if playing || disabled {
             pause_step_player()
         } else {
             play_step_player()
@@ -112,6 +118,7 @@ pub fn step_slider(props: &StepSliderProps) -> Html {
                 min="0"
                 max={max.to_string()}
                 value={active_step_index.to_string()}
+                {disabled}
                 {oninput}
             />
         </div>

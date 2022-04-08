@@ -7,7 +7,7 @@ use core::fmt;
 use graph::*;
 use std::{
     collections::{BTreeMap, BTreeSet},
-    fmt::Debug,
+    fmt::{Debug, Display},
     hash::Hash,
 };
 
@@ -18,20 +18,18 @@ pub enum VertexState {
     Visited,
 }
 
-type PathfindingFunc = fn(
-    AdjacencyList<Coord, isize>,
-    Vertex<Coord>,
-    Vertex<Coord>,
-    PathfindingSteps<Coord>,
-) -> PathfindingResult<Coord>;
+pub type PathfindingFunc<V, E> =
+    fn(AdjacencyList<V, E>, Vertex<V>, Vertex<V>, PathfindingSteps<V>) -> PathfindingResult<V, E>;
+
+pub type GraphWeightMap<V, E> = BTreeMap<Vertex<V>, E>;
 
 /// Tracks the duration of running the algorithm and returns a [`PathfindingResult`].
-pub fn run_pathfinding(
-    graph: &AdjacencyList<Coord, isize>,
-    start: Vertex<Coord>,
-    end: Vertex<Coord>,
-    algorithm: PathfindingFunc,
-) -> (PathfindingResult<Coord>, instant::Duration) {
+pub fn run_pathfinding<V: Copy + Debug + Display + Ord + Hash, E: Clone>(
+    graph: &AdjacencyList<V, E>,
+    start: Vertex<V>,
+    end: Vertex<V>,
+    algorithm: PathfindingFunc<V, E>,
+) -> (PathfindingResult<V, E>, instant::Duration) {
     let start_time = instant::Instant::now();
     let res = algorithm(graph.clone(), start, end, PathfindingSteps::new(vec![]));
     let duration = start_time.elapsed();
@@ -76,6 +74,9 @@ impl<T: Copy + Clone + Debug + Ord + Hash> PathfindingSteps<T> {
     }
     pub fn get_all(self) -> Vec<PathfindingStep<T>> {
         self.steps
+    }
+    pub fn len(&self) -> usize {
+        self.steps.len()
     }
 }
 
@@ -144,15 +145,26 @@ impl fmt::Display for Coord {
     }
 }
 
-pub fn generate_graph(width: usize, height: usize, diagonals: bool) -> AdjacencyList<Coord, isize> {
+pub fn generate_graph(
+    width: usize,
+    height: usize,
+    diagonals: bool,
+    walls: BTreeSet<Vertex<Coord>>,
+) -> AdjacencyList<Coord, isize> {
     let mut graph = AdjacencyList::<Coord, isize>::default();
 
     for y in 0..height as isize {
         for x in 0..width as isize {
             let vertex = Vertex::new(Coord::new(x, y));
+            if walls.contains(&vertex) {
+                continue;
+            }
             let vertex_cost = vertex.name.x + vertex.name.y;
             let mut neighbors = BTreeMap::<Vertex<Coord>, isize>::new();
             for coord in vertex.name.adjacent(diagonals) {
+                if walls.contains(&Vertex::new(coord)) {
+                    continue;
+                }
                 if coord.x >= 0
                     && coord.x < width as isize
                     && coord.y >= 0
@@ -169,16 +181,16 @@ pub fn generate_graph(width: usize, height: usize, diagonals: bool) -> Adjacency
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct PathfindingResult<T: Clone + Copy + Debug + Ord + Hash> {
-    pub steps: PathfindingSteps<T>,
-    pub path: BTreeSet<Vertex<T>>,
-    pub costs: BTreeMap<Vertex<T>, isize>,
+pub struct PathfindingResult<V: Clone + Copy + Debug + Ord + Hash, E> {
+    pub steps: PathfindingSteps<V>,
+    pub path: Vec<Vertex<V>>,
+    pub costs: GraphWeightMap<V, E>,
 }
-impl<T: Clone + Copy + Debug + Ord + Hash> PathfindingResult<T> {
+impl<V: Clone + Copy + Debug + Ord + Hash, E> PathfindingResult<V, E> {
     pub fn new(
-        steps: PathfindingSteps<T>,
-        path: BTreeSet<Vertex<T>>,
-        costs: BTreeMap<Vertex<T>, isize>,
+        steps: PathfindingSteps<V>,
+        path: Vec<Vertex<V>>,
+        costs: GraphWeightMap<V, E>,
     ) -> Self {
         Self { steps, path, costs }
     }

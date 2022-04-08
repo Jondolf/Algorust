@@ -12,36 +12,39 @@
       outline: 1px solid hsla(0, 0%, 50%, 20%);
 
       &.start {
-        transform: scale(0.6);
-        background-color: var(--color-accent);
+        fill: var(--color-accent);
+        z-index: 2;
       }
 
       &.end {
-        transform: scale(0.6);
-        background-color: orangered;
+        fill: orangered;
+        z-index: 2;
       }
 
       &.wall {
-        background-color: #ccc;
+        fill: #ccc;
         outline: none;
       }
 
-      &.path {
-        transform: scale(0.6);
-        background-color: yellow;
-      }
-
       &.unvisited {
-        background-color: transparent;
+        fill: transparent;
       }
 
       &.visited {
-        background-color: #0066ff99;
+        fill: #0066ff99;
       }
 
       &.new-visited {
-        background-color: #00bbff;
+        fill: #00bbff;
       }
+    }
+
+    .path {
+      stroke: orange;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      z-index: 1;
     }
   }
 

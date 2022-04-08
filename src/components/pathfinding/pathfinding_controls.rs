@@ -1,10 +1,12 @@
+use pathfinding::Coord;
 use yew::prelude::*;
 use yew_router::{history::History, hooks::use_history};
 
 use crate::{
     components::input_items::*,
     pages::pathfinding::{
-        get_pathfinding_algorithms, PathfindingConfig, PathfindingConfigUpdate, PathfindingRoute,
+        get_pathfinding_algorithms, PathfindingAlgorithm, PathfindingConfig,
+        PathfindingConfigUpdate, PathfindingRoute,
     },
 };
 
@@ -26,7 +28,7 @@ pub fn pathfinding_controls(props: &PathfindingControlsProps) -> Html {
     let algorithm_names = use_state_eq(|| {
         get_pathfinding_algorithms()
             .values()
-            .map(|algorithm| algorithm.name.to_string())
+            .map(|algorithm: &PathfindingAlgorithm<Coord, isize>| algorithm.name.to_string())
             .collect::<Vec<String>>()
     });
 
@@ -66,6 +68,7 @@ pub fn pathfinding_controls(props: &PathfindingControlsProps) -> Html {
 
     let toggle_move_diagonally = {
         let config = config.clone();
+        let update_config = update_config.clone();
 
         Callback::from(move |_| {
             update_config.emit((
@@ -74,6 +77,20 @@ pub fn pathfinding_controls(props: &PathfindingControlsProps) -> Html {
                     ..config.clone()
                 },
                 PathfindingConfigUpdate::UpdatePathAndGraph,
+            ));
+        })
+    };
+
+    let change_playback_time = {
+        let config = config.clone();
+
+        Callback::from(move |playback_time| {
+            update_config.emit((
+                PathfindingConfig {
+                    playback_time,
+                    ..config.clone()
+                },
+                PathfindingConfigUpdate::NoUpdate,
             ));
         })
     };
@@ -103,6 +120,12 @@ pub fn pathfinding_controls(props: &PathfindingControlsProps) -> Html {
                 value={props.config.graph_height}
                 oninput={change_graph_height}
                 min={2}
+            />
+            <FloatInput<f32>
+                title="Playback time (seconds)"
+                value={props.config.playback_time}
+                oninput={change_playback_time}
+                min={0.0}
             />
             <Checkbox title="Move diagonally" value={config.move_diagonally} oninput={toggle_move_diagonally} />
         </div>
