@@ -4,15 +4,12 @@ use std::{
     hash::Hash,
 };
 
-use crate::{
-    graph::{AdjacencyList, Vertex},
-    PathfindingResult, PathfindingSteps, VertexState,
-};
+use crate::{graph::AdjacencyList, PathfindingResult, PathfindingSteps, VertexState};
 
 pub fn dfs<V: Copy + Clone + Debug + Display + Ord + Hash, E: Clone>(
     adjacency_list: AdjacencyList<V, E>,
-    start: Vertex<V>,
-    end: Vertex<V>,
+    start: V,
+    end: V,
     mut steps: PathfindingSteps<V>,
 ) -> PathfindingResult<V, E> {
     let path = _iterative_dfs(adjacency_list, start, end, &mut steps);
@@ -21,13 +18,13 @@ pub fn dfs<V: Copy + Clone + Debug + Display + Ord + Hash, E: Clone>(
 
 fn _iterative_dfs<V: Copy + Clone + Debug + Display + Ord + Hash, E: Clone>(
     adjacency_list: AdjacencyList<V, E>,
-    start: Vertex<V>,
-    end: Vertex<V>,
+    start: V,
+    end: V,
     steps: &mut PathfindingSteps<V>,
-) -> Vec<Vertex<V>> {
+) -> Vec<V> {
     let mut stack = vec![start];
     // Map of the path's vertices and their parents
-    let mut vertex_parents = HashMap::<Vertex<V>, Vertex<V>>::new();
+    let mut vertex_parents = HashMap::<V, V>::new();
     let mut visited = BTreeSet::new();
 
     while !stack.is_empty() {
@@ -61,9 +58,9 @@ fn _iterative_dfs<V: Copy + Clone + Debug + Display + Ord + Hash, E: Clone>(
 }
 
 fn get_path<V: Copy + Clone + Debug + Display + Ord + Hash>(
-    vertex_parents: HashMap<Vertex<V>, Vertex<V>>,
-    mut vertex: Vertex<V>,
-) -> Vec<Vertex<V>> {
+    vertex_parents: HashMap<V, V>,
+    mut vertex: V,
+) -> Vec<V> {
     let mut path = vec![];
 
     while vertex_parents.contains_key(&vertex) {
@@ -76,11 +73,11 @@ fn get_path<V: Copy + Clone + Debug + Display + Ord + Hash>(
 
 fn _recursive_dfs<V: Copy + Clone + Debug + Display + Ord + Hash, E: Clone>(
     adjacency_list: AdjacencyList<V, E>,
-    (vertex, cost): (Vertex<V>, E),
-    mut visited: BTreeMap<Vertex<V>, E>,
-    end: Vertex<V>,
+    (vertex, cost): (V, E),
+    mut visited: BTreeMap<V, E>,
+    end: V,
     mut steps: PathfindingSteps<V>,
-) -> (BTreeMap<Vertex<V>, E>, PathfindingSteps<V>) {
+) -> (BTreeMap<V, E>, PathfindingSteps<V>) {
     visited.insert(vertex, cost);
 
     if vertex == end {

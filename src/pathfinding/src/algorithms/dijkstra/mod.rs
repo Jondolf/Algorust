@@ -5,22 +5,19 @@ use std::{
     hash::Hash,
 };
 
-use crate::{
-    graph::{AdjacencyList, Vertex},
-    PathfindingResult, PathfindingSteps, VertexState,
-};
+use crate::{graph::AdjacencyList, PathfindingResult, PathfindingSteps, VertexState};
 
 pub fn dijkstra<V: Copy + Clone + Debug + Display + Ord + Hash, E: Clone + Ord>(
     adjacency_list: AdjacencyList<V, E>,
-    start: Vertex<V>,
-    end: Vertex<V>,
+    start: V,
+    end: V,
     mut steps: PathfindingSteps<V>,
 ) -> PathfindingResult<V, E>
 where
     isize: From<E>,
     E: From<isize>,
 {
-    let mut distances = BTreeMap::<Vertex<V>, E>::new();
+    let mut distances = BTreeMap::<V, E>::new();
     let mut visited = HashSet::new();
     let mut to_visit = BinaryHeap::new();
 
@@ -96,10 +93,10 @@ impl<V, E: Ord> Eq for Visit<V, E> {}
 /// Finds the shortest path from start to end according to a given distance map.
 fn distance_map_shortest_path<V: Copy + Clone + Debug + Display + Ord + Hash, E: Clone + Ord>(
     adjacency_list: &AdjacencyList<V, E>,
-    distances: &BTreeMap<Vertex<V>, E>,
-    start: Vertex<V>,
-    end: Vertex<V>,
-) -> Vec<Vertex<V>>
+    distances: &BTreeMap<V, E>,
+    start: V,
+    end: V,
+) -> Vec<V>
 where
     E: From<isize>,
 {

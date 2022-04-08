@@ -19,15 +19,15 @@ pub enum VertexState {
 }
 
 pub type PathfindingFunc<V, E> =
-    fn(AdjacencyList<V, E>, Vertex<V>, Vertex<V>, PathfindingSteps<V>) -> PathfindingResult<V, E>;
+    fn(AdjacencyList<V, E>, V, V, PathfindingSteps<V>) -> PathfindingResult<V, E>;
 
-pub type GraphWeightMap<V, E> = BTreeMap<Vertex<V>, E>;
+pub type GraphWeightMap<V, E> = BTreeMap<V, E>;
 
 /// Tracks the duration of running the algorithm and returns a [`PathfindingResult`].
 pub fn run_pathfinding<V: Copy + Debug + Display + Ord + Hash, E: Clone>(
     graph: &AdjacencyList<V, E>,
-    start: Vertex<V>,
-    end: Vertex<V>,
+    start: V,
+    end: V,
     algorithm: PathfindingFunc<V, E>,
 ) -> (PathfindingResult<V, E>, instant::Duration) {
     let start_time = instant::Instant::now();
@@ -63,7 +63,7 @@ impl<T: Copy + Clone + Debug + Ord + Hash> PathfindingSteps<T> {
     }
     pub fn insert_state_to_last_step(
         &mut self,
-        vertex: Vertex<T>,
+        vertex: T,
         state: VertexState,
     ) -> Option<VertexState> {
         if !self.steps.is_empty() {
@@ -81,12 +81,12 @@ impl<T: Copy + Clone + Debug + Ord + Hash> PathfindingSteps<T> {
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct PathfindingStep<T: Copy + Clone + Debug + Ord + Hash> {
-    pub states: BTreeMap<Vertex<T>, VertexState>,
-    pub path: BTreeSet<Vertex<T>>,
+pub struct PathfindingStep<V: Copy + Clone + Debug + Ord + Hash> {
+    pub states: BTreeMap<V, VertexState>,
+    pub path: BTreeSet<V>,
 }
-impl<T: Copy + Clone + Debug + Ord + Hash> PathfindingStep<T> {
-    pub fn new(states: BTreeMap<Vertex<T>, VertexState>, path: BTreeSet<Vertex<T>>) -> Self {
+impl<V: Copy + Clone + Debug + Ord + Hash> PathfindingStep<V> {
+    pub fn new(states: BTreeMap<V, VertexState>, path: BTreeSet<V>) -> Self {
         Self { states, path }
     }
     pub fn new_to_old_visited(&mut self) -> &mut Self {
@@ -102,7 +102,7 @@ impl<T: Copy + Clone + Debug + Ord + Hash> PathfindingStep<T> {
             .retain(|_, state| *state != VertexState::Visited);
         self
     }
-    pub fn get(&self, vertex: Vertex<T>) -> Option<&VertexState> {
+    pub fn get(&self, vertex: V) -> Option<&VertexState> {
         self.states.get(&vertex)
     }
 }
@@ -149,20 +149,20 @@ pub fn generate_graph(
     width: usize,
     height: usize,
     diagonals: bool,
-    walls: BTreeSet<Vertex<Coord>>,
+    walls: BTreeSet<Coord>,
 ) -> AdjacencyList<Coord, isize> {
     let mut graph = AdjacencyList::<Coord, isize>::default();
 
     for y in 0..height as isize {
         for x in 0..width as isize {
-            let vertex = Vertex::new(Coord::new(x, y));
+            let vertex = Coord::new(x, y);
             if walls.contains(&vertex) {
                 continue;
             }
-            let vertex_cost = vertex.name.x + vertex.name.y;
-            let mut neighbors = BTreeMap::<Vertex<Coord>, isize>::new();
-            for coord in vertex.name.adjacent(diagonals) {
-                if walls.contains(&Vertex::new(coord)) {
+            let vertex_cost = vertex.x + vertex.y;
+            let mut neighbors = BTreeMap::<Coord, isize>::new();
+            for coord in vertex.adjacent(diagonals) {
+                if walls.contains(&coord) {
                     continue;
                 }
                 if coord.x >= 0
@@ -170,7 +170,7 @@ pub fn generate_graph(
                     && coord.y >= 0
                     && coord.y < height as isize
                 {
-                    neighbors.insert(Vertex::new(coord), vertex_cost + coord.x + coord.y);
+                    neighbors.insert(coord, vertex_cost + coord.x + coord.y);
                 }
             }
             graph.add_vertex_with_undirected_edges(vertex, neighbors);
@@ -183,15 +183,11 @@ pub fn generate_graph(
 #[derive(Clone, Debug, PartialEq)]
 pub struct PathfindingResult<V: Clone + Copy + Debug + Ord + Hash, E> {
     pub steps: PathfindingSteps<V>,
-    pub path: Vec<Vertex<V>>,
+    pub path: Vec<V>,
     pub costs: GraphWeightMap<V, E>,
 }
 impl<V: Clone + Copy + Debug + Ord + Hash, E> PathfindingResult<V, E> {
-    pub fn new(
-        steps: PathfindingSteps<V>,
-        path: Vec<Vertex<V>>,
-        costs: GraphWeightMap<V, E>,
-    ) -> Self {
+    pub fn new(steps: PathfindingSteps<V>, path: Vec<V>, costs: GraphWeightMap<V, E>) -> Self {
         Self { steps, path, costs }
     }
 }

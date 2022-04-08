@@ -1,4 +1,4 @@
-use pathfinding::{graph::Vertex, Coord, VertexState};
+use pathfinding::{Coord, VertexState};
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -10,12 +10,12 @@ const SCALE: usize = 100;
 pub struct PathGridProps {
     pub width: usize,
     pub height: usize,
-    pub graph: BTreeMap<Vertex<Coord>, VertexState>,
-    pub walls: BTreeSet<Vertex<Coord>>,
-    pub path: Vec<Vertex<Coord>>,
-    pub start: Vertex<Coord>,
-    pub end: Vertex<Coord>,
-    pub on_cell_click: Callback<Vertex<Coord>>,
+    pub graph: BTreeMap<Coord, VertexState>,
+    pub walls: BTreeSet<Coord>,
+    pub path: Vec<Coord>,
+    pub start: Coord,
+    pub end: Coord,
+    pub on_cell_click: Callback<Coord>,
     pub on_draw_end: Callback<()>,
 }
 
@@ -31,11 +31,11 @@ pub fn path_grid(props: &PathGridProps) -> Html {
         on_draw_end,
         ..
     } = props.clone();
-    let (start, end) = (props.start.name, props.end.name);
+    let (start, end) = (props.start, props.end);
     let onmouseover = Callback::from(move |(e, x, y): (MouseEvent, isize, isize)| {
         e.prevent_default();
         if e.buttons() == 1 {
-            on_cell_click.emit(Vertex::new(Coord::new(x, y)));
+            on_cell_click.emit(Coord::new(x, y));
         }
     });
     let path_str = use_state_eq(String::new);
@@ -50,13 +50,13 @@ pub fn path_grid(props: &PathGridProps) -> Html {
                 if !path.is_empty() {
                     new_path_str += &format!(
                         "M {} {}",
-                        path[0].name.x as usize * SCALE + SCALE / 2,
-                        path[0].name.y as usize * SCALE + SCALE / 2
+                        path[0].x as usize * SCALE + SCALE / 2,
+                        path[0].y as usize * SCALE + SCALE / 2
                     );
 
                     for vertex in path[1..path.len()].iter() {
                         let vertex = *vertex;
-                        let (x, y) = (vertex.name.x as usize, vertex.name.y as usize);
+                        let (x, y) = (vertex.x as usize, vertex.y as usize);
                         new_path_str +=
                             &format!(" L {} {}", x * SCALE + SCALE / 2, y * SCALE + SCALE / 2);
                     }
@@ -77,7 +77,7 @@ pub fn path_grid(props: &PathGridProps) -> Html {
                 {
                     for (0..height as isize).map(|y| html! {
                         for (0..width as isize).map(|x| {
-                            if let Some((vertex, state)) = graph.get_key_value(&Vertex::new(Coord::new(x, y))) {
+                            if let Some((vertex, state)) = graph.get_key_value(&Coord::new(x, y)) {
                                 if *vertex != props.start && *vertex != props.end {
                                     match state {
                                         VertexState::NotVisited => html! {
@@ -103,7 +103,7 @@ pub fn path_grid(props: &PathGridProps) -> Html {
                 // Walls
                 {
                     for walls.into_iter().map(|vertex| {
-                        let (x, y) = (vertex.name.x, vertex.name.y);
+                        let (x, y) = (vertex.x, vertex.y);
                         html! {
                             <GridCell class="wall" {x} {y} onmouseover={onmouseover.clone()} />
                         }

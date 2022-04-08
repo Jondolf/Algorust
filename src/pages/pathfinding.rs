@@ -8,9 +8,8 @@ use crate::components::{
     step_slider::StepSlider,
 };
 use pathfinding::{
-    algorithms, generate_graph,
-    graph::{AdjacencyList, Vertex},
-    run_pathfinding, Coord, PathfindingResult, PathfindingStep, PathfindingSteps, VertexState,
+    algorithms, generate_graph, graph::AdjacencyList, run_pathfinding, Coord, PathfindingResult,
+    PathfindingStep, PathfindingSteps, VertexState,
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -22,7 +21,7 @@ use yew_hooks::use_title;
 use yew_router::prelude::*;
 
 type PathfindingFunc<V, E> =
-    fn(AdjacencyList<V, E>, Vertex<V>, Vertex<V>, PathfindingSteps<V>) -> PathfindingResult<V, E>;
+    fn(AdjacencyList<V, E>, V, V, PathfindingSteps<V>) -> PathfindingResult<V, E>;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct PathfindingAlgorithm<V: Copy + Debug + Display + Ord + Hash, E: Clone> {
@@ -41,8 +40,8 @@ impl<V: Copy + Debug + Display + Ord + Hash, E: Clone> PathfindingAlgorithm<V, E
     pub fn find_path(
         &self,
         graph: &AdjacencyList<V, E>,
-        start: Vertex<V>,
-        end: Vertex<V>,
+        start: V,
+        end: V,
     ) -> (PathfindingResult<V, E>, instant::Duration) {
         run_pathfinding(graph, start, end, self.find_path)
     }
@@ -108,8 +107,8 @@ pub struct PathfindingConfig {
     pub graph_width: usize,
     pub graph_height: usize,
     pub move_diagonally: bool,
-    pub start: Vertex<Coord>,
-    pub end: Vertex<Coord>,
+    pub start: Coord,
+    pub end: Coord,
     pub active_tool: PathTool,
     pub playback_time: f32,
 }
@@ -120,8 +119,8 @@ impl Default for PathfindingConfig {
             graph_width: 40,
             graph_height: 20,
             move_diagonally: false,
-            start: Vertex::new(Coord::new(3, 4)),
-            end: Vertex::new(Coord::new(19, 16)),
+            start: Coord::new(3, 4),
+            end: Coord::new(19, 16),
             active_tool: PathTool::Wall,
             playback_time: 5.0,
         }
@@ -154,7 +153,7 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
         })
     };
 
-    let walls = use_state(BTreeSet::<Vertex<Coord>>::new);
+    let walls = use_state(BTreeSet::<Coord>::new);
     let graph = use_state(|| {
         generate_graph(
             config.graph_width,
@@ -163,10 +162,10 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
             (*walls).clone(),
         )
     });
-    let path = use_state(Vec::<Vertex<Coord>>::new);
+    let path = use_state(Vec::<Coord>::new);
     let steps = use_state(Vec::<PathfindingStep<Coord>>::new);
     let active_step_index = use_state(|| 0);
-    let graph_at_active_step = use_state(BTreeMap::<Vertex<Coord>, VertexState>::new);
+    let graph_at_active_step = use_state(BTreeMap::<Coord, VertexState>::new);
     let paused = use_state_eq(|| false);
 
     // If the new step count is lower than the current step index, the step index is set to the step count. Otherwise it will reset to the given index.
@@ -433,7 +432,7 @@ fn get_graph_at_step<V: Copy + Debug + Display + Ord + Hash, E: Clone>(
     graph: &AdjacencyList<V, E>,
     steps: &[PathfindingStep<V>],
     step_index: usize,
-) -> BTreeMap<Vertex<V>, VertexState> {
+) -> BTreeMap<V, VertexState> {
     let mut new = BTreeMap::new();
     for v in graph.hash_map.keys() {
         new.insert(*v, VertexState::NotVisited);
