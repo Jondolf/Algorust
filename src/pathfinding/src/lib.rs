@@ -197,7 +197,15 @@ pub fn generate_graph<E: Edge>(
                     && coord.y >= 0
                     && coord.y < height as isize
                 {
-                    neighbors.insert(coord, 1);
+                    let a_diff = (coord.x - vertex.x).abs();
+                    let b_diff = (coord.y - vertex.y).abs();
+                    if a_diff == 0 || b_diff == 0 {
+                        // Horizontal or vertical costs 1
+                        neighbors.insert(coord, E::from(1).unwrap());
+                    } else {
+                        // Diagonal costs 2 to reduce "zigzags"
+                        neighbors.insert(coord, E::from(2).unwrap());
+                    }
                 }
             }
             graph.add_vertex_with_undirected_edges(vertex, neighbors);
