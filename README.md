@@ -23,6 +23,7 @@ Below is an image of a sorting algorithm's page with a bar graph of a randomly g
 
 - Depth-first search / DFS (unweighted, doesn't guarantee shortest path)
 - Dijkstra (weighted, guarantees shortest path)
+- A* (weighted, uses heuristic, generally guarantees shortest path)
 - More coming soon
 
 Below is a screenshot of running the dijkstra pathfinding algorithm in a drawn labyrinth. It shows the visited positions at each step, and when you get to the final step, you will see the finished path.
