@@ -4,11 +4,9 @@ use std::{
     fmt::Debug,
 };
 
-use num_traits::PrimInt;
+use crate::{graph::AdjacencyList, Edge, PathfindingResult, PathfindingSteps, Vertex, VertexState};
 
-use crate::{graph::AdjacencyList, Distance, PathfindingResult, PathfindingSteps, VertexState};
-
-pub fn dijkstra<V: Distance, E: PrimInt>(
+pub fn dijkstra<V: Vertex, E: Edge>(
     adjacency_list: AdjacencyList<V, E>,
     start: V,
     end: V,
@@ -88,7 +86,7 @@ impl<V, E: Ord> PartialEq for Visit<V, E> {
 impl<V, E: Ord> Eq for Visit<V, E> {}
 
 /// Finds the shortest path from start to end according to a given distance map.
-fn distance_map_shortest_path<V: Distance, E: PrimInt>(
+fn distance_map_shortest_path<V: Vertex, E: Edge>(
     adjacency_list: &AdjacencyList<V, E>,
     distances: &BTreeMap<V, E>,
     start: V,

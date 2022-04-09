@@ -7,10 +7,9 @@ use crate::components::{
     sidebar::Sidebar,
     step_slider::StepSlider,
 };
-use num_traits::PrimInt;
 use pathfinding::{
-    algorithms, generate_graph, graph::AdjacencyList, run_pathfinding, Coord, Distance,
-    PathfindingResult, PathfindingStep, PathfindingSteps, VertexState,
+    algorithms, generate_graph, graph::AdjacencyList, run_pathfinding, Coord, Edge,
+    PathfindingResult, PathfindingStep, PathfindingSteps, Vertex, VertexState,
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -20,15 +19,17 @@ use yew::prelude::*;
 use yew_hooks::use_title;
 use yew_router::prelude::*;
 
+pub type EdgeType = isize;
+
 type PathfindingFunc<V, E> =
     fn(AdjacencyList<V, E>, V, V, PathfindingSteps<V>) -> PathfindingResult<V, E>;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct PathfindingAlgorithm<V: Distance, E: Clone> {
+pub struct PathfindingAlgorithm<V: Vertex, E: Edge> {
     pub name: String,
     find_path: PathfindingFunc<V, E>,
 }
-impl<V: Distance, E: Clone> PathfindingAlgorithm<V, E> {
+impl<V: Vertex, E: Edge> PathfindingAlgorithm<V, E> {
     pub fn new(name: &str, find_path: PathfindingFunc<V, E>) -> Self {
         Self {
             name: name.to_string(),
@@ -46,20 +47,17 @@ impl<V: Distance, E: Clone> PathfindingAlgorithm<V, E> {
         run_pathfinding(graph, start, end, self.find_path)
     }
 }
-impl Default for PathfindingAlgorithm<Coord, isize> {
+impl<E: Edge> Default for PathfindingAlgorithm<Coord, E> {
     fn default() -> Self {
         Self {
             name: String::from("Dijkstra"),
-            find_path: algorithms::dijkstra::<Coord, isize>,
+            find_path: algorithms::dijkstra::<Coord, E>,
         }
     }
 }
 
-pub fn get_pathfinding_algorithms<V, E>() -> BTreeMap<&'static str, PathfindingAlgorithm<V, E>>
-where
-    V: Distance,
-    E: Clone + PartialOrd + PrimInt,
-{
+pub fn get_pathfinding_algorithms<V: Vertex, E: Edge>(
+) -> BTreeMap<&'static str, PathfindingAlgorithm<V, E>> {
     // `BTreeMap` because it keeps the order of the items.
     BTreeMap::from([
         (
@@ -91,7 +89,7 @@ pub fn switch_pathfinding(route: &PathfindingRoute) -> Html {
             <Redirect<PathfindingRoute> to={PathfindingRoute::PathfindingAlgorithm { algorithm: "dfs".to_string()} } />
         },
         PathfindingRoute::PathfindingAlgorithm { algorithm } => {
-            if get_pathfinding_algorithms::<Coord, isize>().contains_key(algorithm.as_str()) {
+            if get_pathfinding_algorithms::<Coord, EdgeType>().contains_key(algorithm.as_str()) {
                 html! {
                     <PathfindingPage algorithm={algorithm.to_string()} />
                 }
@@ -105,8 +103,8 @@ pub fn switch_pathfinding(route: &PathfindingRoute) -> Html {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct PathfindingConfig {
-    pub algorithm: PathfindingAlgorithm<Coord, isize>,
+pub struct PathfindingConfig<E: Edge> {
+    pub algorithm: PathfindingAlgorithm<Coord, E>,
     pub graph_width: usize,
     pub graph_height: usize,
     pub move_diagonally: bool,
@@ -115,7 +113,7 @@ pub struct PathfindingConfig {
     pub active_tool: PathTool,
     pub playback_time: f32,
 }
-impl Default for PathfindingConfig {
+impl<E: Edge> Default for PathfindingConfig<E> {
     fn default() -> Self {
         Self {
             algorithm: PathfindingAlgorithm::default(),
@@ -158,7 +156,7 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
 
     let walls = use_state(BTreeSet::<Coord>::new);
     let graph = use_state(|| {
-        generate_graph(
+        generate_graph::<EdgeType>(
             config.graph_width,
             config.graph_height,
             config.move_diagonally,
@@ -194,7 +192,7 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
         let graph_at_active_step = graph_at_active_step.clone();
         let update_or_reset_step_index = update_or_reset_step_index.clone();
 
-        move |graph: &AdjacencyList<Coord, isize>, config: &PathfindingConfig| {
+        move |graph: &AdjacencyList<Coord, EdgeType>, config: &PathfindingConfig<EdgeType>| {
             let (res, _) = config.algorithm.find_path(graph, start, end);
             let new_steps = res.steps.clone().get_all();
             let new_active_step_index = update_or_reset_step_index(new_steps.len(), 0);
@@ -216,7 +214,10 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
         let update_path = update_path.clone();
 
         Callback::from(
-            move |(new_config, update_type): (PathfindingConfig, PathfindingConfigUpdate)| {
+            move |(new_config, update_type): (
+                PathfindingConfig<EdgeType>,
+                PathfindingConfigUpdate,
+            )| {
                 match update_type {
                     PathfindingConfigUpdate::UpdatePath => {
                         update_path(&graph, &new_config);
@@ -393,7 +394,7 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
                 <h2>{"Config"}</h2>
 
                 <Collapsible title="General" open={true} class="config-section">
-                    <PathfindingControls config={(*config).clone()} {update_config} />
+                    <PathfindingControls<EdgeType> config={(*config).clone()} {update_config} />
                 </Collapsible>
             </Sidebar>
 
@@ -431,7 +432,7 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
     }
 }
 
-fn get_graph_at_step<V: Distance, E: Clone>(
+fn get_graph_at_step<V: Vertex, E: Clone>(
     graph: &AdjacencyList<V, E>,
     steps: &[PathfindingStep<V>],
     step_index: usize,

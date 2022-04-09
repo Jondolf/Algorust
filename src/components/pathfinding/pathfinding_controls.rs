@@ -1,4 +1,4 @@
-use pathfinding::Coord;
+use pathfinding::{Coord, Edge};
 use yew::prelude::*;
 use yew_router::{history::History, hooks::use_history};
 
@@ -11,13 +11,13 @@ use crate::{
 };
 
 #[derive(Properties, Clone, PartialEq)]
-pub struct PathfindingControlsProps {
-    pub config: PathfindingConfig,
-    pub update_config: Callback<(PathfindingConfig, PathfindingConfigUpdate)>,
+pub struct PathfindingControlsProps<E: 'static + Edge> {
+    pub config: PathfindingConfig<E>,
+    pub update_config: Callback<(PathfindingConfig<E>, PathfindingConfigUpdate)>,
 }
 
 #[function_component(PathfindingControls)]
-pub fn pathfinding_controls(props: &PathfindingControlsProps) -> Html {
+pub fn pathfinding_controls<E: 'static + Edge>(props: &PathfindingControlsProps<E>) -> Html {
     let PathfindingControlsProps {
         config,
         update_config,
@@ -28,7 +28,7 @@ pub fn pathfinding_controls(props: &PathfindingControlsProps) -> Html {
     let algorithm_names = use_state_eq(|| {
         get_pathfinding_algorithms()
             .values()
-            .map(|algorithm: &PathfindingAlgorithm<Coord, isize>| algorithm.name.to_string())
+            .map(|algorithm: &PathfindingAlgorithm<Coord, E>| algorithm.name.to_string())
             .collect::<Vec<String>>()
     });
 

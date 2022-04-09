@@ -1,10 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use num_traits::PrimInt;
+use crate::{graph::AdjacencyList, Edge, PathfindingResult, PathfindingSteps, Vertex, VertexState};
 
-use crate::{graph::AdjacencyList, Distance, PathfindingResult, PathfindingSteps, VertexState};
-
-pub fn dfs<V: Distance, E: PrimInt>(
+pub fn dfs<V: Vertex, E: Edge>(
     adjacency_list: AdjacencyList<V, E>,
     start: V,
     end: V,
@@ -14,7 +12,7 @@ pub fn dfs<V: Distance, E: PrimInt>(
     PathfindingResult::new(steps, path, BTreeMap::new())
 }
 
-fn _iterative_dfs<V: Distance, E: PrimInt>(
+fn _iterative_dfs<V: Vertex, E: Edge>(
     adjacency_list: AdjacencyList<V, E>,
     start: V,
     end: V,
@@ -55,7 +53,7 @@ fn _iterative_dfs<V: Distance, E: PrimInt>(
     vec![]
 }
 
-fn get_path<V: Distance>(vertex_parents: HashMap<V, V>, mut vertex: V) -> Vec<V> {
+fn get_path<V: Vertex>(vertex_parents: HashMap<V, V>, mut vertex: V) -> Vec<V> {
     let mut path = vec![];
 
     while vertex_parents.contains_key(&vertex) {
@@ -66,7 +64,7 @@ fn get_path<V: Distance>(vertex_parents: HashMap<V, V>, mut vertex: V) -> Vec<V>
     path
 }
 
-fn _recursive_dfs<V: Distance, E: PrimInt>(
+fn _recursive_dfs<V: Vertex, E: Edge>(
     adjacency_list: AdjacencyList<V, E>,
     (vertex, cost): (V, E),
     mut visited: BTreeMap<V, E>,

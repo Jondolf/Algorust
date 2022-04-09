@@ -4,11 +4,9 @@ use std::{
     hash::Hash,
 };
 
-use num_traits::PrimInt;
+use crate::{graph::AdjacencyList, Edge, PathfindingResult, PathfindingSteps, Vertex};
 
-use crate::{graph::AdjacencyList, Distance, PathfindingResult, PathfindingSteps};
-
-pub fn a_star<V: Distance, E: PrimInt>(
+pub fn a_star<V: Vertex, E: Edge>(
     adjacency_list: AdjacencyList<V, E>,
     start: V,
     end: V,
@@ -16,7 +14,7 @@ pub fn a_star<V: Distance, E: PrimInt>(
 ) -> PathfindingResult<V, E> {
     let start_cell = Cell::new(start, None, E::zero(), start.distance::<E>(end));
     let mut visited = vec![];
-    let mut open_set = BinaryHeap::from([VertexWithPriority::new(E::zero(), start_cell.vertex)]);
+    let mut open_set = BinaryHeap::from([VertexWithPriority::new(start_cell.vertex, E::zero())]);
     let mut cells = HashMap::<V, Cell<V, E>>::new();
 
     for vertex in adjacency_list.hash_map.keys() {
@@ -54,8 +52,8 @@ pub fn a_star<V: Distance, E: PrimInt>(
                 steps.init_step();
                 steps.insert_state_to_last_step(neighbor, crate::VertexState::NewVisited);
                 open_set.push(VertexWithPriority::new(
-                    (tentative_g_dist.to_owned() + neighbor_cell.h.to_owned()).into(),
                     neighbor_cell.vertex,
+                    (tentative_g_dist.to_owned() + neighbor_cell.h.to_owned()).into(),
                 ));
             }
         }
@@ -64,7 +62,7 @@ pub fn a_star<V: Distance, E: PrimInt>(
     PathfindingResult::new(steps, vec![], BTreeMap::new())
 }
 
-fn reconstruct_path<V: Distance, E: PrimInt>(cells: HashMap<V, Cell<V, E>>, mut curr: V) -> Vec<V> {
+fn reconstruct_path<V: Vertex, E: Edge>(cells: HashMap<V, Cell<V, E>>, mut curr: V) -> Vec<V> {
     let mut path = vec![curr];
     while let Some(parent) = cells.get(&curr).unwrap().parent {
         curr = parent;
@@ -74,21 +72,21 @@ fn reconstruct_path<V: Distance, E: PrimInt>(cells: HashMap<V, Cell<V, E>>, mut 
 }
 
 #[derive(Clone, PartialEq, Eq)]
-struct VertexWithPriority<V: Ord + Hash, E: Ord> {
+struct VertexWithPriority<V: Ord + Eq + Hash, E: Ord> {
     vertex: V,
     priority: E,
 }
-impl<V: Ord + Hash, E: Ord> VertexWithPriority<V, E> {
-    fn new(priority: E, vertex: V) -> Self {
-        Self { priority, vertex }
+impl<V: Ord + Eq + Hash, E: Ord> VertexWithPriority<V, E> {
+    fn new(vertex: V, priority: E) -> Self {
+        Self { vertex, priority }
     }
 }
-impl<V: Ord + Hash, E: Ord> PartialOrd for VertexWithPriority<V, E> {
+impl<V: Ord + Eq + Hash, E: Ord> PartialOrd for VertexWithPriority<V, E> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         other.priority.partial_cmp(&self.priority)
     }
 }
-impl<V: Ord + Hash, E: Ord> Ord for VertexWithPriority<V, E> {
+impl<V: Ord + Eq + Hash, E: Ord> Ord for VertexWithPriority<V, E> {
     fn cmp(&self, other: &Self) -> Ordering {
         other.priority.cmp(&self.priority)
     }

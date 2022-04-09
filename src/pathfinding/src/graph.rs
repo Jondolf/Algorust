@@ -1,14 +1,12 @@
-use std::{
-    collections::BTreeMap,
-    fmt::{Debug, Display},
-    hash::Hash,
-};
+use std::{collections::BTreeMap, fmt::Debug};
+
+use crate::Vertex;
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct AdjacencyList<V: Copy + Clone + Debug + Display + Ord + Hash, E: Clone> {
+pub struct AdjacencyList<V: Vertex, E: Clone> {
     pub hash_map: BTreeMap<V, BTreeMap<V, E>>,
 }
-impl<V: Copy + Clone + Debug + Display + Ord + Hash, E: Clone> AdjacencyList<V, E> {
+impl<V: Vertex, E: Clone> AdjacencyList<V, E> {
     pub fn new(hash_map: BTreeMap<V, BTreeMap<V, E>>) -> Self {
         Self { hash_map }
     }
