@@ -6,6 +6,10 @@
     margin: auto;
     background-color: var(--bg-color-1);
 
+    svg {
+      overflow: visible;
+    }
+
     .grid-cell {
       aspect-ratio: 1/1;
       box-sizing: border-box;
@@ -37,6 +41,17 @@
       &.new-visited {
         fill: #00bbff;
       }
+    }
+
+    .grid {
+      width: calc(100% + 3px);
+      height: calc(100% + 3px);
+    }
+
+    #gridPattern path {
+      stroke: hsla(0, 0%, 50%, 30%);
+      stroke-width: 3;
+      fill: none;
     }
 
     .path {

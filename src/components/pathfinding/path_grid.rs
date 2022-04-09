@@ -1,4 +1,6 @@
 use pathfinding::{Coord, VertexState};
+use wasm_bindgen::JsCast;
+use web_sys::HtmlElement;
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -32,6 +34,7 @@ pub fn path_grid(props: &PathGridProps) -> Html {
         ..
     } = props.clone();
     let (start, end) = (props.start, props.end);
+    let path_grid_ref = use_node_ref();
     let onmouseover = Callback::from(move |(e, x, y): (MouseEvent, isize, isize)| {
         e.prevent_default();
         if e.buttons() == 1 {
@@ -70,8 +73,40 @@ pub fn path_grid(props: &PathGridProps) -> Html {
         );
     }
 
+    let onmouseover = {
+        let path_grid_ref = path_grid_ref.clone();
+
+        move |e: MouseEvent| {
+            let el = path_grid_ref
+                .get()
+                .unwrap()
+                .dyn_into::<HtmlElement>()
+                .unwrap();
+            let (x_px, y_px) = (
+                (e.x() - el.offset_left()) as f32,
+                (e.y() - el.offset_top()) as f32,
+            );
+            let (rect_width_px, rect_height_px) = (
+                el.client_width() as f32 / width as f32,
+                el.client_height() as f32 / height as f32,
+            );
+            let (x, y) = (
+                (x_px / rect_width_px).floor() as isize,
+                (y_px / rect_height_px).floor() as isize,
+            );
+            onmouseover.emit((e, x, y))
+        }
+    };
+
     html! {
-        <div class="path-grid" style={format!("aspect-ratio: {}/{}", width, height)} onmouseup={move |_| on_draw_end.emit(())}>
+        <div
+            ref={path_grid_ref}
+            class="path-grid"
+            style={format!("aspect-ratio: {}/{}", width, height)}
+            onmouseup={move |_| on_draw_end.emit(())}
+            onmousedown={onmouseover.clone()}
+            onmousemove={onmouseover}
+        >
             <svg viewBox={format!("0 0 {} {}", width * SCALE, height * SCALE)} xmlns="http://www.w3.org/2000/svg">
                 // Start, end and visited cells
                 {
@@ -80,21 +115,19 @@ pub fn path_grid(props: &PathGridProps) -> Html {
                             if let Some((vertex, state)) = graph.get_key_value(&Coord::new(x, y)) {
                                 if *vertex != props.start && *vertex != props.end {
                                     match state {
-                                        VertexState::NotVisited => html! {
-                                            <GridCell class="unvisited" {x} {y} onmouseover={onmouseover.clone()} />
-                                        },
                                         VertexState::NewVisited => html! {
-                                            <GridCell class="new-visited" {x} {y} onmouseover={onmouseover.clone()} />
+                                            <GridCell class="new-visited" {x} {y} />
                                         },
                                         VertexState::Visited => html! {
-                                            <GridCell class="visited" {x} {y} onmouseover={onmouseover.clone()} />
+                                            <GridCell class="visited" {x} {y} />
                                         },
+                                        _ => html! {}
                                     }
                                 } else {
-                                    html! { }
+                                    html! {}
                                 }
                             } else {
-                                html! { }
+                                html! {}
                             }
                         })
                     })
@@ -105,15 +138,23 @@ pub fn path_grid(props: &PathGridProps) -> Html {
                     for walls.into_iter().map(|vertex| {
                         let (x, y) = (vertex.x, vertex.y);
                         html! {
-                            <GridCell class="wall" {x} {y} onmouseover={onmouseover.clone()} />
+                            <GridCell class="wall" {x} {y} />
                         }
                     })
                 }
 
+                <defs>
+                    <pattern id="gridPattern" width={(SCALE).to_string()} height={(SCALE).to_string()} patternUnits="userSpaceOnUse">
+                        <path d={format!("M {} 0 L 0 0 0 {}", SCALE, SCALE)} />
+                    </pattern>
+                </defs>
+
+                <rect class="grid" fill="url(#gridPattern)" />
+
                 <path class="path" d={(*path_str).clone()} stroke-width={(SCALE  / 2).to_string()} />
 
-                <GridCell class="start" x={start.x} y={start.y} onmouseover={onmouseover.clone()} />
-                <GridCell class="end" x={end.x} y={end.y} onmouseover={onmouseover.clone()} />
+                <GridCell class="start" x={start.x} y={start.y} />
+                <GridCell class="end" x={end.x} y={end.y} />
             </svg>
         </div>
     }
@@ -123,6 +164,7 @@ pub fn path_grid(props: &PathGridProps) -> Html {
 struct GridCellProps {
     x: isize,
     y: isize,
+    #[prop_or(Callback::from(|_|()))]
     onmouseover: Callback<(MouseEvent, isize, isize)>,
     class: Classes,
 }
