@@ -7,14 +7,14 @@ use crate::components::{
     sidebar::Sidebar,
     step_slider::StepSlider,
 };
+use num_traits::PrimInt;
 use pathfinding::{
-    algorithms, generate_graph, graph::AdjacencyList, run_pathfinding, Coord, PathfindingResult,
-    PathfindingStep, PathfindingSteps, VertexState,
+    algorithms, generate_graph, graph::AdjacencyList, run_pathfinding, Coord, Distance,
+    PathfindingResult, PathfindingStep, PathfindingSteps, VertexState,
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
-    fmt::{Debug, Display},
-    hash::Hash,
+    fmt::Debug,
 };
 use yew::prelude::*;
 use yew_hooks::use_title;
@@ -24,11 +24,11 @@ type PathfindingFunc<V, E> =
     fn(AdjacencyList<V, E>, V, V, PathfindingSteps<V>) -> PathfindingResult<V, E>;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct PathfindingAlgorithm<V: Copy + Debug + Display + Ord + Hash, E: Clone> {
+pub struct PathfindingAlgorithm<V: Distance, E: Clone> {
     pub name: String,
     find_path: PathfindingFunc<V, E>,
 }
-impl<V: Copy + Debug + Display + Ord + Hash, E: Clone> PathfindingAlgorithm<V, E> {
+impl<V: Distance, E: Clone> PathfindingAlgorithm<V, E> {
     pub fn new(name: &str, find_path: PathfindingFunc<V, E>) -> Self {
         Self {
             name: name.to_string(),
@@ -57,12 +57,15 @@ impl Default for PathfindingAlgorithm<Coord, isize> {
 
 pub fn get_pathfinding_algorithms<V, E>() -> BTreeMap<&'static str, PathfindingAlgorithm<V, E>>
 where
-    V: Copy + Debug + Display + Ord + Hash,
-    E: Clone + Ord + From<isize>,
-    isize: From<E>,
+    V: Distance,
+    E: Clone + PartialOrd + PrimInt,
 {
     // `BTreeMap` because it keeps the order of the items.
     BTreeMap::from([
+        (
+            "a*",
+            PathfindingAlgorithm::new("A*", algorithms::a_star::<V, E>),
+        ),
         (
             "dijkstra",
             PathfindingAlgorithm::new("Dijkstra", algorithms::dijkstra::<V, E>),
@@ -428,7 +431,7 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
     }
 }
 
-fn get_graph_at_step<V: Copy + Debug + Display + Ord + Hash, E: Clone>(
+fn get_graph_at_step<V: Distance, E: Clone>(
     graph: &AdjacencyList<V, E>,
     steps: &[PathfindingStep<V>],
     step_index: usize,

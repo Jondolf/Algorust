@@ -1,27 +1,24 @@
 use std::{
     cmp::Ordering,
     collections::{BTreeMap, BinaryHeap, HashSet},
-    fmt::{Debug, Display},
-    hash::Hash,
+    fmt::Debug,
 };
 
-use crate::{graph::AdjacencyList, PathfindingResult, PathfindingSteps, VertexState};
+use num_traits::PrimInt;
 
-pub fn dijkstra<V: Copy + Clone + Debug + Display + Ord + Hash, E: Clone + Ord>(
+use crate::{graph::AdjacencyList, Distance, PathfindingResult, PathfindingSteps, VertexState};
+
+pub fn dijkstra<V: Distance, E: PrimInt>(
     adjacency_list: AdjacencyList<V, E>,
     start: V,
     end: V,
     mut steps: PathfindingSteps<V>,
-) -> PathfindingResult<V, E>
-where
-    isize: From<E>,
-    E: From<isize>,
-{
+) -> PathfindingResult<V, E> {
     let mut distances = BTreeMap::<V, E>::new();
     let mut visited = HashSet::new();
     let mut to_visit = BinaryHeap::new();
 
-    distances.insert(start, 0.into());
+    distances.insert(start, E::zero());
     to_visit.push(Visit {
         vertex: start,
         distance: 0,
@@ -37,7 +34,7 @@ where
 
         if let Some(neighbors) = adjacency_list.get_neighbors(&vertex) {
             for (neighbor, cost) in neighbors {
-                let new_distance = E::from(distance + isize::from(cost.to_owned()));
+                let new_distance = E::from(distance).unwrap() + cost.to_owned();
                 let is_shorter = distances
                     .get(neighbor)
                     .map_or(true, |current| new_distance < current.to_owned());
@@ -55,7 +52,7 @@ where
                     distances.insert(*neighbor, new_distance.to_owned().into());
                     to_visit.push(Visit {
                         vertex: *neighbor,
-                        distance: new_distance.into(),
+                        distance: new_distance.to_isize().unwrap(),
                     });
                 }
             }
@@ -91,19 +88,16 @@ impl<V, E: Ord> PartialEq for Visit<V, E> {
 impl<V, E: Ord> Eq for Visit<V, E> {}
 
 /// Finds the shortest path from start to end according to a given distance map.
-fn distance_map_shortest_path<V: Copy + Clone + Debug + Display + Ord + Hash, E: Clone + Ord>(
+fn distance_map_shortest_path<V: Distance, E: PrimInt>(
     adjacency_list: &AdjacencyList<V, E>,
     distances: &BTreeMap<V, E>,
     start: V,
     end: V,
-) -> Vec<V>
-where
-    E: From<isize>,
-{
+) -> Vec<V> {
     let mut shortest_path = vec![end];
     let mut curr_vertex = end;
     // If neighbor is not found in distance map
-    let default_val = (&start, &isize::MAX.into());
+    let default_val = (&start, &E::max_value());
 
     while curr_vertex != start {
         if let Some(neighbors) = adjacency_list.get_neighbors(&curr_vertex) {

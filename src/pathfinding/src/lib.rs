@@ -5,6 +5,7 @@ pub mod graph;
 
 use core::fmt;
 use graph::*;
+use num_traits::PrimInt;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::{Debug, Display},
@@ -107,6 +108,12 @@ impl<V: Copy + Clone + Debug + Ord + Hash> PathfindingStep<V> {
     }
 }
 
+/// A trait for structs that can calculate the distance from a to b.
+pub trait Distance: Clone + Copy + Debug + Display + Default + PartialEq + Ord + Hash {
+    /// Get the distance from a to b.
+    fn distance<T: PrimInt>(&self, from: Self) -> T;
+}
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Coord {
     pub x: isize,
@@ -144,6 +151,13 @@ impl fmt::Display for Coord {
         write!(f, "{},{}", self.x, self.y)
     }
 }
+impl Distance for Coord {
+    fn distance<T: PrimInt>(&self, from: Self) -> T {
+        let x_diff = (from.x - self.x).abs();
+        let y_diff = (from.y - self.y).abs();
+        T::from(x_diff.max(y_diff)).unwrap()
+    }
+}
 
 pub fn generate_graph(
     width: usize,
@@ -159,7 +173,6 @@ pub fn generate_graph(
             if walls.contains(&vertex) {
                 continue;
             }
-            let vertex_cost = vertex.x + vertex.y;
             let mut neighbors = BTreeMap::<Coord, isize>::new();
             for coord in vertex.adjacent(diagonals) {
                 if walls.contains(&coord) {
@@ -170,7 +183,7 @@ pub fn generate_graph(
                     && coord.y >= 0
                     && coord.y < height as isize
                 {
-                    neighbors.insert(coord, vertex_cost + coord.x + coord.y);
+                    neighbors.insert(coord, 1);
                 }
             }
             graph.add_vertex_with_undirected_edges(vertex, neighbors);

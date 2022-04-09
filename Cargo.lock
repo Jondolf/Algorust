@@ -634,6 +634,7 @@ version = "0.1.0"
 dependencies = [
  "instant",
  "log",
+ "num-traits",
  "rand",
  "wasm-logger",
 ]
