@@ -2,6 +2,7 @@
 //! I made them for my algorithm visualization website, so they most likely won't be suited for other projects.
 pub mod algorithms;
 pub mod graph;
+pub mod maze_generation;
 
 use core::fmt;
 use graph::*;
@@ -10,12 +11,118 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::{Debug, Display},
     hash::Hash,
+    ops::Add,
 };
 
 /// A trait for structs that can calculate the distance from a to b.
 pub trait Distance {
     /// Get the distance from a to b.
     fn distance<T: PrimInt>(&self, from: Self) -> T;
+}
+
+pub trait Line<T: Distance> {
+    fn new(from: T, to: T) -> Self;
+    // Approximate the points of a straight line between two points.
+    fn get_points(&self) -> Vec<T>;
+    fn len(&self) -> usize;
+}
+
+pub struct Rect {
+    start: Coord,
+    end: Coord,
+}
+impl Rect {
+    fn new(start: Coord, end: Coord) -> Self {
+        Self { start, end }
+    }
+    fn get_perimeter(&self) -> Vec<Coord> {
+        let mut coords = vec![];
+        for x in self.start.x..=self.end.x {
+            coords.push(Coord::new(x, self.start.y));
+            coords.push(Coord::new(x, self.end.y));
+        }
+        for y in self.start.y + 1..self.end.y {
+            coords.push(Coord::new(self.start.x, y));
+            coords.push(Coord::new(self.end.x, y));
+        }
+        coords
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Line2D {
+    from: Coord,
+    to: Coord,
+}
+impl Line<Coord> for Line2D {
+    fn new(from: Coord, to: Coord) -> Self {
+        Self { from, to }
+    }
+    /// Gets the points of a straight line between two points with the [Bresenham's line algorithm](https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm). This version only works for integers.
+    fn get_points(&self) -> Vec<Coord> {
+        if (self.to.y - self.from.y).abs() < (self.to.x - self.from.x).abs() {
+            if self.from.x > self.to.x {
+                Self::get_points_low(self.to, self.from)
+            } else {
+                Self::get_points_low(self.from, self.to)
+            }
+        } else {
+            if self.from.y > self.to.y {
+                Self::get_points_high(self.to, self.from)
+            } else {
+                Self::get_points_high(self.from, self.to)
+            }
+        }
+    }
+    fn len(&self) -> usize {
+        self.from.distance(self.to)
+    }
+}
+impl Line2D {
+    fn get_points_low(from: Coord, to: Coord) -> Vec<Coord> {
+        let mut points = Vec::<Coord>::new();
+        let (dx, mut dy) = (to.x - from.x, to.y - from.y);
+        let mut yi = 1;
+        if dy < 0 {
+            yi = -1;
+            dy = -dy;
+        }
+        let mut d = 2 * dy - dx;
+        let mut y = from.y;
+
+        for x in from.x..=to.x {
+            points.push(Coord::new(x, y));
+            if d > 0 {
+                y += yi;
+                d = d + 2 * (dy - dx);
+            } else {
+                d = d + 2 * dy;
+            }
+        }
+        points
+    }
+    fn get_points_high(from: Coord, to: Coord) -> Vec<Coord> {
+        let mut points = Vec::<Coord>::new();
+        let (mut dx, dy) = (to.x - from.x, to.y - from.y);
+        let mut xi = 1;
+        if dx < 0 {
+            xi = -1;
+            dx = -dx;
+        }
+        let mut d = 2 * dx - dy;
+        let mut x = from.x;
+
+        for y in from.y..=to.y {
+            points.push(Coord::new(x, y));
+            if d > 0 {
+                x += xi;
+                d = d + 2 * (dx - dy);
+            } else {
+                d = d + 2 * dx;
+            }
+        }
+        points
+    }
 }
 
 pub trait Vertex: Distance + Copy + Debug + Display + Ord + Hash {}
@@ -30,6 +137,62 @@ impl Edge for i16 {}
 impl Edge for i32 {}
 impl Edge for i64 {}
 impl Edge for isize {}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Coord {
+    pub x: isize,
+    pub y: isize,
+}
+impl Coord {
+    pub fn new(x: isize, y: isize) -> Self {
+        Self { x, y }
+    }
+    pub fn adjacent(self, diagonals: bool) -> Vec<Self> {
+        let Self { x, y } = self;
+        if diagonals {
+            vec![
+                Coord::new(x - 1, y - 1),
+                Coord::new(x, y - 1),
+                Coord::new(x + 1, y - 1),
+                Coord::new(x - 1, y),
+                Coord::new(x + 1, y),
+                Coord::new(x - 1, y + 1),
+                Coord::new(x, y + 1),
+                Coord::new(x + 1, y + 1),
+            ]
+        } else {
+            vec![
+                Coord::new(x, y - 1),
+                Coord::new(x, y + 1),
+                Coord::new(x - 1, y),
+                Coord::new(x + 1, y),
+            ]
+        }
+    }
+}
+impl fmt::Display for Coord {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{},{}", self.x, self.y)
+    }
+}
+impl Add for Coord {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+impl Vertex for Coord {}
+impl Distance for Coord {
+    fn distance<T: PrimInt>(&self, from: Self) -> T {
+        let x_diff = (from.x - self.x).abs();
+        let y_diff = (from.y - self.y).abs();
+        T::from(x_diff.max(y_diff)).unwrap()
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum VertexState {
@@ -124,52 +287,6 @@ impl<V: Vertex> PathfindingStep<V> {
     }
     pub fn get(&self, vertex: V) -> Option<&VertexState> {
         self.states.get(&vertex)
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Coord {
-    pub x: isize,
-    pub y: isize,
-}
-impl Coord {
-    pub fn new(x: isize, y: isize) -> Self {
-        Self { x, y }
-    }
-    pub fn adjacent(self, diagonals: bool) -> Vec<Self> {
-        let Self { x, y } = self;
-        if diagonals {
-            vec![
-                Coord::new(x - 1, y - 1),
-                Coord::new(x, y - 1),
-                Coord::new(x + 1, y - 1),
-                Coord::new(x - 1, y),
-                Coord::new(x + 1, y),
-                Coord::new(x - 1, y + 1),
-                Coord::new(x, y + 1),
-                Coord::new(x + 1, y + 1),
-            ]
-        } else {
-            vec![
-                Coord::new(x, y - 1),
-                Coord::new(x, y + 1),
-                Coord::new(x - 1, y),
-                Coord::new(x + 1, y),
-            ]
-        }
-    }
-}
-impl fmt::Display for Coord {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{},{}", self.x, self.y)
-    }
-}
-impl Vertex for Coord {}
-impl Distance for Coord {
-    fn distance<T: PrimInt>(&self, from: Self) -> T {
-        let x_diff = (from.x - self.x).abs();
-        let y_diff = (from.y - self.y).abs();
-        T::from(x_diff.max(y_diff)).unwrap()
     }
 }
 

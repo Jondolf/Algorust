@@ -1,13 +1,14 @@
 #Pathfinding {
   .path-grid {
-    display: grid;
+    display: flex;
     width: 100%;
-    max-height: calc(100vh - var(--top-bar-height) - calc(var(--main-padding) * 2) - var(--step-slider-height) - 3.5rem);
+    max-height: calc(100vh - var(--top-bar-height) - calc(var(--main-padding) * 2) - var(--step-slider-height) - 10rem);
     margin: auto;
     background-color: var(--bg-color-1);
 
     svg {
-      overflow: visible;
+      overflow: hidden;
+      margin: auto;
     }
 
     .grid-cell {

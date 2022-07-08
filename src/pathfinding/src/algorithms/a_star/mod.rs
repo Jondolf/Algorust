@@ -41,20 +41,22 @@ pub fn a_star<V: Vertex, E: Edge>(
         visited.push(curr_vertex);
         let curr_g = cells.get(&curr_vertex).unwrap().g.to_owned();
 
-        for (neighbor, cost) in adjacency_list.get_neighbors(&curr_vertex).unwrap().clone() {
-            let tentative_g_dist = curr_g.to_owned() + cost.to_owned();
-            let neighbor_cell = cells.get_mut(&neighbor).unwrap();
+        if let Some(neighbors) = adjacency_list.get_neighbors(&curr_vertex) {
+            for (neighbor, cost) in neighbors.clone() {
+                let tentative_g_dist = curr_g.to_owned() + cost.to_owned();
+                let neighbor_cell = cells.get_mut(&neighbor).unwrap();
 
-            if tentative_g_dist < neighbor_cell.g.to_owned().into() {
-                neighbor_cell.set_parent(Some(curr_vertex));
-                neighbor_cell.set_g(tentative_g_dist.into());
+                if tentative_g_dist < neighbor_cell.g.to_owned().into() {
+                    neighbor_cell.set_parent(Some(curr_vertex));
+                    neighbor_cell.set_g(tentative_g_dist.into());
 
-                steps.init_step();
-                steps.insert_state_to_last_step(neighbor, crate::VertexState::NewVisited);
-                open_set.push(VertexWithPriority::new(
-                    neighbor_cell.vertex,
-                    (tentative_g_dist.to_owned() + neighbor_cell.h.to_owned()).into(),
-                ));
+                    steps.init_step();
+                    steps.insert_state_to_last_step(neighbor, crate::VertexState::NewVisited);
+                    open_set.push(VertexWithPriority::new(
+                        neighbor_cell.vertex,
+                        (tentative_g_dist.to_owned() + neighbor_cell.h.to_owned()).into(),
+                    ));
+                }
             }
         }
     }

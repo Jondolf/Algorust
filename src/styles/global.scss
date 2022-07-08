@@ -1,5 +1,5 @@
-@use "./sorting-algorithms.scss";
-@use "./pathfinding.scss";
+@use './sorting-algorithms.scss';
+@use './pathfinding.scss';
 
 $sidebar-resize-handle-thickness: 4px;
 $input-border-radius: 0.25rem;
@@ -107,7 +107,7 @@ $input-border-radius: 0.25rem;
       cursor: ns-resize;
     }
 
-    >h2 {
+    > h2 {
       height: 3rem;
       margin: 0;
     }
@@ -132,7 +132,7 @@ $input-border-radius: 0.25rem;
         box-sizing: border-box;
       }
 
-      >h2 {
+      > h2 {
         height: 3rem;
         margin: 0;
       }
@@ -250,11 +250,16 @@ select {
   }
 }
 
-input[type="range"] {
+input[type='range'] {
   width: 100%;
   margin: 0;
   padding: 0;
   height: 1.25rem;
+}
+
+.step-slider-label {
+  display: block;
+  padding-top: 1rem;
 }
 
 .step-slider {
@@ -284,7 +289,7 @@ input[type="range"] {
     }
   }
 
-  input[type="range"] {
+  input[type='range'] {
     flex: 1;
     outline: 2px solid transparent;
     transition: outline 250ms ease;
@@ -296,7 +301,7 @@ input[type="range"] {
 }
 
 details {
-  >summary {
+  > summary {
     margin: 0.25rem 0;
     outline: none;
     border: 2px solid transparent;
@@ -314,7 +319,7 @@ details {
       margin-top: 0.5rem;
     }
 
-    &.config-section>summary {
+    &.config-section > summary {
       font-weight: bold;
       user-select: none;
       padding: 0.5rem 0;

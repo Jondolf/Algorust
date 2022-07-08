@@ -4,6 +4,8 @@ use yew_hooks::use_interval;
 
 #[derive(Clone, Debug, PartialEq, Properties)]
 pub struct StepSliderProps {
+    #[prop_or_default]
+    pub label: String,
     pub active_step_index: usize,
     pub max: usize,
     #[prop_or(10.0)]
@@ -17,6 +19,7 @@ pub struct StepSliderProps {
 #[function_component(StepSlider)]
 pub fn step_slider(props: &StepSliderProps) -> Html {
     let StepSliderProps {
+        label,
         active_step_index,
         max,
         playback_time,
@@ -110,18 +113,29 @@ pub fn step_slider(props: &StepSliderProps) -> Html {
     });
 
     html! {
-        <div class="step-slider">
-            { playback_button(on_click_playback_button, playing) }
-            <input
-                type="range"
-                id="stepSlider"
-                min="0"
-                max={max.to_string()}
-                value={active_step_index.to_string()}
-                {disabled}
-                {oninput}
-            />
-        </div>
+        <>
+            {
+                if !label.is_empty() {
+                    html! {
+                        <label class="step-slider-label" for={format!("stepSlider{}", label.clone())}>{{ label.clone() }}</label>
+                    }
+                } else {
+                    html! {}
+                }
+            }
+            <div class="step-slider">
+                { playback_button(on_click_playback_button, playing) }
+                <input
+                    type="range"
+                    id={format!("stepSlider{}", label.clone())}
+                    min="0"
+                    max={max.to_string()}
+                    value={active_step_index.to_string()}
+                    {disabled}
+                    {oninput}
+                />
+            </div>
+        </>
     }
 }
 

@@ -1,8 +1,11 @@
 use pathfinding::{Coord, VertexState};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fmt::Write,
+};
 use wasm_bindgen::JsCast;
-use web_sys::HtmlElement;
-
-use std::collections::{BTreeMap, BTreeSet};
+use web_sys::Element;
+use yew_hooks::use_size;
 
 use yew::prelude::*;
 
@@ -34,7 +37,12 @@ pub fn path_grid(props: &PathGridProps) -> Html {
         ..
     } = props.clone();
     let (start, end) = (props.start, props.end);
+
+    let path_grid_container_ref = use_node_ref();
+    let path_grid_container_size = use_size(path_grid_container_ref.clone());
+
     let path_grid_ref = use_node_ref();
+
     let onmouseover = Callback::from(move |(e, x, y): (MouseEvent, isize, isize)| {
         e.prevent_default();
         if e.buttons() == 1 {
@@ -51,7 +59,8 @@ pub fn path_grid(props: &PathGridProps) -> Html {
                 let mut new_path_str = String::new();
 
                 if !path.is_empty() {
-                    new_path_str += &format!(
+                    let _ = write!(
+                        &mut new_path_str,
                         "M {} {}",
                         path[0].x as usize * SCALE + SCALE / 2,
                         path[0].y as usize * SCALE + SCALE / 2
@@ -60,8 +69,12 @@ pub fn path_grid(props: &PathGridProps) -> Html {
                     for vertex in path[1..path.len()].iter() {
                         let vertex = *vertex;
                         let (x, y) = (vertex.x as usize, vertex.y as usize);
-                        new_path_str +=
-                            &format!(" L {} {}", x * SCALE + SCALE / 2, y * SCALE + SCALE / 2);
+                        let _ = write!(
+                            &mut new_path_str,
+                            " L {} {}",
+                            x * SCALE + SCALE / 2,
+                            y * SCALE + SCALE / 2
+                        );
                     }
                 }
 
@@ -77,15 +90,8 @@ pub fn path_grid(props: &PathGridProps) -> Html {
         let path_grid_ref = path_grid_ref.clone();
 
         move |e: MouseEvent| {
-            let el = path_grid_ref
-                .get()
-                .unwrap()
-                .dyn_into::<HtmlElement>()
-                .unwrap();
-            let (x_px, y_px) = (
-                (e.x() - el.offset_left()) as f32,
-                (e.y() - el.offset_top()) as f32,
-            );
+            let el = path_grid_ref.get().unwrap().dyn_into::<Element>().unwrap();
+            let (x_px, y_px) = ((e.offset_x()) as f32, (e.offset_y()) as f32);
             let (rect_width_px, rect_height_px) = (
                 el.client_width() as f32 / width as f32,
                 el.client_height() as f32 / height as f32,
@@ -98,61 +104,70 @@ pub fn path_grid(props: &PathGridProps) -> Html {
         }
     };
 
+    let wall_cells = walls
+        .iter()
+        .map(|vertex| html! { <GridCell class="wall" x={vertex.x} y={vertex.y } key={format!("{}, {}", vertex.x, vertex.y)} /> })
+        .collect::<Html>();
+
+    let visited_cells = (0..height as isize)
+        .map(|y| {
+            (0..width as isize)
+                .map(|x| {
+                    if let Some((vertex, state)) = graph.get_key_value(&Coord::new(x, y)) {
+                        if *vertex != props.start && *vertex != props.end {
+                            match state {
+                                VertexState::NewVisited => html! {
+                                    <GridCell class="new-visited" {x} {y} key={format!("{}, {}", vertex.x, vertex.y)} />
+                                },
+                                VertexState::Visited => html! {
+                                    <GridCell class="visited" {x} {y} key={format!("{}, {}", vertex.x, vertex.y)} />
+                                },
+                                _ => html! {},
+                            }
+                        } else {
+                            html! {}
+                        }
+                    } else {
+                        html! {}
+                    }
+                })
+                .collect::<Html>()
+        })
+        .collect::<Html>();
+
     html! {
         <div
-            ref={path_grid_ref}
+            ref={path_grid_container_ref}
             class="path-grid"
             style={format!("aspect-ratio: {}/{}", width, height)}
-            onmouseup={move |_| on_draw_end.emit(())}
-            onmousedown={onmouseover.clone()}
-            onmousemove={onmouseover}
         >
-            <svg viewBox={format!("0 0 {} {}", width * SCALE, height * SCALE)} xmlns="http://www.w3.org/2000/svg">
-                // Start, end and visited cells
-                {
-                    for (0..height as isize).map(|y| html! {
-                        for (0..width as isize).map(|x| {
-                            if let Some((vertex, state)) = graph.get_key_value(&Coord::new(x, y)) {
-                                if *vertex != props.start && *vertex != props.end {
-                                    match state {
-                                        VertexState::NewVisited => html! {
-                                            <GridCell class="new-visited" {x} {y} />
-                                        },
-                                        VertexState::Visited => html! {
-                                            <GridCell class="visited" {x} {y} />
-                                        },
-                                        _ => html! {}
-                                    }
-                                } else {
-                                    html! {}
-                                }
-                            } else {
-                                html! {}
-                            }
-                        })
-                    })
-                }
+            <svg
+                ref={path_grid_ref}
+                viewBox={format!("0 0 {} {}", width * SCALE, height * SCALE)}
+                xmlns="http://www.w3.org/2000/svg"
+                style={format!("max-width: {}px; max-height: {}px", path_grid_container_size.0, path_grid_container_size.1)}
+                onmouseup={move |_| on_draw_end.emit(())}
+                onmousedown={onmouseover.clone()}
+                onmousemove={onmouseover}
+            >
+                { visited_cells }
 
-                // Walls
-                {
-                    for walls.into_iter().map(|vertex| {
-                        let (x, y) = (vertex.x, vertex.y);
-                        html! {
-                            <GridCell class="wall" {x} {y} />
-                        }
-                    })
-                }
+                { wall_cells }
 
+                // Grid pattern for the background
                 <defs>
                     <pattern id="gridPattern" width={(SCALE).to_string()} height={(SCALE).to_string()} patternUnits="userSpaceOnUse">
                         <path d={format!("M {} 0 L 0 0 0 {}", SCALE, SCALE)} />
                     </pattern>
                 </defs>
 
-                <rect class="grid" fill="url(#gridPattern)" />
+                // Background grid
+                <rect class="grid" fill="url(#gridPattern)" width={(width * SCALE).to_string()} height={(height * SCALE).to_string()} />
 
-                <path class="path" d={(*path_str).clone()} stroke-width={(SCALE  / 2).to_string()} />
+                // The path found by the pathfinding algorithm
+                <path class="path" d={(*path_str).clone()} stroke-width={(SCALE / 2).to_string()} />
 
+                // Start and end cells
                 <GridCell class="start" x={start.x} y={start.y} />
                 <GridCell class="end" x={end.x} y={end.y} />
             </svg>
