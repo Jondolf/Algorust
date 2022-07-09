@@ -16,7 +16,7 @@ pub fn home_page() -> Html {
                 <h3>{ "How is this project made?" }</h3>
 
                 <p>
-                    { "Everything in this project is made entirely by me in Rust with the " } <a href="https://yew.rs" target="_blank">{ "Yew web framework" }</a> { ". If you want, you can view the code " } <a href="https://github.com/Jondolf/rust-algorithms" target="_blank">{ "here" }</a> { ". I am not a Rust, Yew or algorithm expert however (I'm in high school), so many things may not necessarily be optimal or compliant with best practises."
+                    { "Everything in this project is made entirely by me in Rust with the " } <a href="https://yew.rs" target="_blank">{ "Yew web framework" }</a> { ". If you want, you can view the code at " } <a href="https://github.com/Jondolf/rust-algorithms" target="_blank">{ "the project's GitHub repository" }</a> { ". I am not a Rust, Yew or algorithm expert however (I'm in high school), so many things may not necessarily be optimal or compliant with best practises."
                     }
                 </p>
 
