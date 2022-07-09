@@ -1,7 +1,9 @@
 #SortingAlgorithms {
-  .sort-graph {
+  .sort-graph-container {
+    display: flex;
     width: 100%;
-    height: calc(100vh - 2rem - var(--top-bar-height)) !important;
+    height: calc(100vh - var(--top-bar-height) - calc(var(--main-padding) * 2) - var(--step-slider-height) - 2rem);
+    margin: auto;
   }
 
   .step-info {

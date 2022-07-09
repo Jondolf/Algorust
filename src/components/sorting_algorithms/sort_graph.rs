@@ -35,9 +35,11 @@ pub struct SortGraphConfig {
 #[function_component(SortGraph)]
 pub fn sort_graph(props: &SortGraphProps) -> Html {
     let canvas_ref = use_node_ref();
+    let canvas_container_ref = use_node_ref();
+    let canvas_container_size = use_size(canvas_container_ref.clone());
+
     let canvas = use_state_eq(|| None);
     let ctx: UseStateHandle<Option<CanvasRenderingContext2d>> = use_state_eq(|| None);
-    let canvas_size = use_size(canvas_ref.clone());
     let render_timeout_id: UseStateHandle<Option<i32>> = use_state_eq(|| None);
     let _render_timeout_closure: UseStateHandle<Option<Closure<dyn FnMut()>>> = use_state(|| None);
 
@@ -136,8 +138,6 @@ pub fn sort_graph(props: &SortGraphProps) -> Html {
                     .dyn_into()
                     .unwrap(),
             ));
-            canvas_el.set_width(canvas_size.0);
-            canvas_el.set_height(canvas_size.1);
             draw.clone()();
 
             canvas.set(Some(canvas_el));
@@ -175,19 +175,22 @@ pub fn sort_graph(props: &SortGraphProps) -> Html {
     }
 
     use_effect_with_deps(
-        move |size| {
-            if let Some(canvas) = &*canvas {
-                canvas.set_width(size.0);
-                canvas.set_height(size.1);
-                draw.clone()();
-            }
+        move |_| {
+            draw.clone()();
             || ()
         },
-        canvas_size,
+        canvas_container_size,
     );
 
     html! {
-        <canvas class="sort-graph" ref={canvas_ref.clone()}></canvas>
+        <div ref={canvas_container_ref.clone()} class="sort-graph-container">
+            <canvas
+                ref={canvas_ref.clone()}
+                class="sort-graph"
+                width={canvas_container_size.0.to_string()}
+                height={canvas_container_size.1.to_string()}
+            ></canvas>
+        </div>
     }
 }
 
