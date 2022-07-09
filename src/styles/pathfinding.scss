@@ -17,7 +17,7 @@
       outline: 1px solid hsla(0, 0%, 50%, 20%);
 
       &.start {
-        fill: var(--color-accent);
+        fill: var(--color-accent-1);
         z-index: 2;
       }
 
@@ -78,10 +78,12 @@
       font-size: 1.5rem;
       margin-right: 0.5rem;
       border-radius: 0.5rem;
+      color: white;
+      background: transparent;
       cursor: pointer;
 
       &.active {
-        background-color: var(--bg-color-2);
+        background: var(--bg-color-2);
       }
     }
   }

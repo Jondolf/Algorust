@@ -27,7 +27,7 @@ enum Route {
 fn switch(routes: &Route) -> Html {
     match routes {
         Route::Home => html! {
-            <Redirect<Route> to={Route::SortingAlgorithms} />
+            <pages::home::HomePage />
         },
         Route::SortingAlgorithms => html! {
             <Switch<pages::sorting_algorithms::SortingAlgorithmsRoute> render={Switch::render(pages::sorting_algorithms::switch_sorting_algorithms)} />
@@ -50,6 +50,7 @@ fn app() -> Html {
         <BrowserRouter>
             <div class="top-bar">
                 <div class="page-links">
+                    <Link<Route> to={Route::Home}>{ "Home" }</Link<Route>>
                     <Link<Route> to={Route::SortingAlgorithms}>{ "Sorting" }</Link<Route>>
                     <Link<Route> to={Route::PathfindingAlgorithms}>{ "Pathfinding" }</Link<Route>>
                 </div>

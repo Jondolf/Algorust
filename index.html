@@ -24,10 +24,10 @@
     <script>
       // Register ServiceWorker
       window.onload = () => {
-        "use strict";
+        'use strict';
 
-        if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.register("/service-worker.js");
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/service-worker.js');
         }
       };
     </script>
@@ -42,8 +42,12 @@
       }
 
       html {
-        --color-accent: #bbff33;
-        --color-accent-hsl: 80, 100%, 60%;
+        --color-accent-1-hsl: 80, 100%, 60%;
+        --color-accent-1: hsl(var(--color-accent-1-hsl));
+        --color-accent-2-hsl: 150, 100%, 60%;
+        --color-accent-2: hsl(var(--color-accent-2-hsl));
+        --color-accent-3-hsl: 190, 100%, 60%;
+        --color-accent-3: hsl(var(--color-accent-3-hsl));
         --bg-color-1: hsl(200, 10%, 15%);
         --bg-color-2: hsl(200, 15%, 10%);
         --top-bar-height: 4rem;
@@ -53,17 +57,12 @@
         background-color: var(--bg-color-1);
         color: white;
         box-sizing: border-box;
+        font-family: 'Roboto Mono', Consolas, monospace;
       }
 
       ::selection {
-        background-color: hsla(var(--color-accent-hsl), 50%);
+        background-color: hsla(var(--color-accent-3-hsl), 50%);
         color: white;
-      }
-
-      * {
-        background-color: transparent;
-        color: white;
-        font-family: "Roboto Mono", Consolas, monospace;
       }
     </style>
   </head>

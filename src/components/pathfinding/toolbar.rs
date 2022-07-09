@@ -34,7 +34,7 @@ pub fn path_toolbar(props: &PathToolbarProps) -> Html {
             PathToolButton {
                 tool: PathTool::Start,
                 description: "Set the path's starting point".to_string(),
-                icon: html! { <span style="color: var(--color-accent)">{ "▣" }</span> },
+                icon: html! { <span style="color: var(--color-accent-1)">{ "▣" }</span> },
             },
             PathToolButton {
                 tool: PathTool::End,

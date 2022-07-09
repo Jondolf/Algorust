@@ -280,7 +280,7 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
 
             <main>
                 <div class="visualization">
-                    <h2>{ format!("{} steps, {:?} ms", output.steps.len(), &output.duration.unwrap().as_millis()) }</h2>
+                    <span>{ format!("{} steps, {:?} ms", output.steps.len(), &output.duration.unwrap().as_millis()) }</span>
 
                     <SortGraph
                         items={output_at_active_step.to_vec()}

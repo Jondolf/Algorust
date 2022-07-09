@@ -1,3 +1,4 @@
+@use './home.scss';
 @use './sorting-algorithms.scss';
 @use './pathfinding.scss';
 
@@ -29,11 +30,12 @@ $input-border-radius: 0.25rem;
 
     a {
       margin-right: 1.5rem;
+      color: white;
       text-decoration: none;
       transition: color 150ms ease;
 
       &:hover {
-        color: var(--color-accent);
+        color: var(--color-accent-2);
       }
     }
   }
@@ -64,6 +66,10 @@ $input-border-radius: 0.25rem;
     color: white;
     box-sizing: border-box;
     white-space: nowrap;
+
+    h2 {
+      color: white;
+    }
 
     .sidebar-content {
       height: 100%;
@@ -142,7 +148,7 @@ $input-border-radius: 0.25rem;
 
 .resize-handle {
   position: absolute;
-  background: var(--color-accent);
+  background: var(--color-accent-2);
   opacity: 0;
   transition: opacity 150ms ease;
   user-select: none;
@@ -150,6 +156,66 @@ $input-border-radius: 0.25rem;
   &:hover {
     opacity: 0.5;
   }
+}
+
+a {
+  color: var(--color-accent-3);
+  transition: color 150ms ease;
+
+  &:hover {
+    color: var(--color-accent-2);
+  }
+}
+
+@keyframes textGradientMove {
+  to {
+    background-position: 100%;
+  }
+}
+
+h1 {
+  font-size: 3em;
+  background: linear-gradient(
+    to right,
+    var(--color-accent-1),
+    var(--color-accent-2),
+    var(--color-accent-3),
+    var(--color-accent-1),
+    var(--color-accent-2),
+    var(--color-accent-3)
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 300% 100%;
+  animation: textGradientMove 10s linear infinite;
+
+  &:first-child {
+    margin: 0;
+  }
+}
+
+h2 {
+  font-size: 1.75em;
+  color: var(--color-accent-1);
+
+  &:first-child {
+    margin: 0;
+  }
+}
+
+h3 {
+  font-size: 1.25em;
+  color: var(--color-accent-2);
+
+  &:first-child {
+    margin: 0;
+  }
+}
+
+p,
+li {
+  line-height: 1.6em;
 }
 
 button,
@@ -192,6 +258,13 @@ select {
     }
   }
 
+  button,
+  input,
+  select {
+    color: white;
+    font-family: 'Roboto Mono', Consolas, monospace;
+  }
+
   button {
     display: flex;
     justify-content: center;
@@ -208,8 +281,8 @@ select {
 
     &:active,
     &:focus {
-      color: var(--color-accent);
-      border: 2px solid var(--color-accent);
+      color: var(--color-accent-1);
+      border: 2px solid var(--color-accent-1);
     }
   }
 
@@ -219,7 +292,7 @@ select {
     left: 0.5rem;
     right: 0.5rem;
     font-size: 0.75em;
-    color: var(--color-accent);
+    color: var(--color-accent-1);
     opacity: 0.75;
     cursor: default;
     user-select: none;
@@ -245,7 +318,7 @@ select {
     text-overflow: ellipsis;
 
     &:focus {
-      border: 2px solid var(--color-accent);
+      border: 2px solid var(--color-accent-1);
     }
   }
 }
@@ -255,6 +328,20 @@ input[type='range'] {
   margin: 0;
   padding: 0;
   height: 1.25rem;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 10px;
+  border-radius: 5px;
+  background: hsla(var(--color-accent-3-hsl), 0.5);
+  overflow: visible;
+
+  &::-webkit-slider-thumb {
+    appearance: none;
+    background: var(--color-accent-3);
+    width: 16px;
+    height: 16px;
+    border-radius: 8px;
+  }
 }
 
 .step-slider-label {
@@ -276,11 +363,12 @@ input[type='range'] {
     margin-right: 0.5rem;
     border: 2px solid transparent;
     border-radius: 0.25rem;
+    background: transparent;
     transition: border 250ms ease;
     cursor: pointer;
 
     &:focus-visible {
-      border: 2px solid var(--color-accent);
+      border: 2px solid var(--color-accent-1);
     }
 
     svg {
@@ -295,7 +383,7 @@ input[type='range'] {
     transition: outline 250ms ease;
 
     &:focus-visible {
-      outline: 2px solid var(--color-accent);
+      outline: 2px solid var(--color-accent-1);
     }
   }
 }
@@ -310,7 +398,7 @@ details {
     transition: border 250ms ease;
 
     &:focus-visible {
-      border: 2px solid var(--color-accent);
+      border: 2px solid var(--color-accent-1);
     }
   }
 
