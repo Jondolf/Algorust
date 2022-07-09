@@ -55,8 +55,8 @@ fn app() -> Html {
                     <Link<Route> to={Route::PathfindingAlgorithms}>{ "Pathfinding" }</Link<Route>>
                 </div>
                 <div class="other-links">
-                    <a href="https://github.com/Jondolf/rust-algorithms" target="_blank">
-                        <img src="/assets/images/GitHub-Mark-Light-64px.png" />
+                    <a href="https://github.com/Jondolf/rust-algorithms" target="_blank" aria-label="Link to this website's GitHub repository (opens in a new window)">
+                        <img src="/assets/images/GitHub-Mark-Light-64px.png" alt="GitHub logo" width="40" height="40" />
                     </a>
                 </div>
             </div>
