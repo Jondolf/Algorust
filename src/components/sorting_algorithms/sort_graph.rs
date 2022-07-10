@@ -18,11 +18,8 @@ extern "C" {
 
 #[derive(Properties, PartialEq)]
 pub struct SortGraphProps {
-    pub items: Vec<u32>,
-    #[prop_or(vec![])]
-    pub step: Vec<SortCommand<u32>>,
-    #[prop_or(None)]
-    pub prev_step: Option<Vec<SortCommand<u32>>>,
+    pub items: UseStateHandle<Vec<u32>>,
+    pub step: UseStateHandle<Vec<SortCommand<u32>>>,
 }
 
 #[derive(Clone, PartialEq)]

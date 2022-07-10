@@ -1,12 +1,8 @@
 use crate::SortCommand;
 
-pub fn quicksort<T: Clone + Copy + Ord>(
-    mut items: Vec<T>,
-    mut steps: Vec<Vec<SortCommand<T>>>,
-) -> (Vec<T>, Vec<Vec<SortCommand<T>>>) {
+pub fn quicksort<T: Clone + Copy + Ord>(items: &mut Vec<T>, steps: &mut Vec<Vec<SortCommand<T>>>) {
     let high = items.len() as isize - 1;
-    _quicksort(&mut items, &mut steps, 0, high);
-    (items, steps)
+    _quicksort(items, steps, 0, high);
 }
 
 fn _quicksort<T: Clone + Copy + Ord>(

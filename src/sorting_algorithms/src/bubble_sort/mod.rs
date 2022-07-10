@@ -1,9 +1,9 @@
 use crate::SortCommand;
 
 pub fn bubble_sort<T: Clone + Copy + Ord>(
-    mut items: Vec<T>,
-    mut steps: Vec<Vec<SortCommand<T>>>,
-) -> (Vec<T>, Vec<Vec<SortCommand<T>>>) {
+    items: &mut Vec<T>,
+    steps: &mut Vec<Vec<SortCommand<T>>>,
+) {
     for i in 0..items.len() {
         let mut swapped = false;
         for j in 0..items.len() - i - 1 {
@@ -17,5 +17,4 @@ pub fn bubble_sort<T: Clone + Copy + Ord>(
             break;
         }
     }
-    (items, steps)
 }

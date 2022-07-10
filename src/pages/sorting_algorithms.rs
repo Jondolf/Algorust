@@ -14,7 +14,7 @@ use crate::{
     utils::{gen_u32_vec, knuth_shuffle},
 };
 use sorting_algorithms::*;
-use std::{borrow::Borrow, collections::BTreeMap};
+use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 use web_sys::window;
 use yew::prelude::*;
 use yew_hooks::use_title;
@@ -22,28 +22,38 @@ use yew_router::prelude::*;
 
 type SortSteps = Vec<Vec<SortCommand<u32>>>;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone)]
 pub struct SortingAlgorithm {
     pub name: String,
-    sort: fn(Vec<u32>, SortSteps) -> (Vec<u32>, SortSteps),
+    sort: fn(&mut Vec<u32>, &mut SortSteps),
 }
+
 impl SortingAlgorithm {
-    fn new(name: &str, sort: fn(Vec<u32>, SortSteps) -> (Vec<u32>, SortSteps)) -> Self {
+    fn new(name: &str, sort: fn(&mut Vec<u32>, &mut SortSteps)) -> Self {
         Self {
             name: name.to_string(),
             sort,
         }
     }
-    fn sort(&self, input: Vec<u32>) -> SortResult<u32> {
+    fn sort(&self, input: Rc<RefCell<Vec<u32>>>) -> SortResult<u32> {
         run_sort(input, self.sort)
     }
 }
+
 impl Default for SortingAlgorithm {
     fn default() -> Self {
         Self {
             name: String::from("Bubble sort"),
             sort: bubble_sort,
         }
+    }
+}
+
+// `SortingAlgorithm` has to implement `PartialEq` because of `Properties` requirements, but it can't be derived because of the `sort` function that takes a mutable reference.
+// Here we implement it manually, assuming that two `SortingAlgorithm`s are partially equal if their names are the same.
+impl PartialEq for SortingAlgorithm {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
     }
 }
 
@@ -98,7 +108,7 @@ pub fn switch_sorting_algorithms(route: &SortingAlgorithmsRoute) -> Html {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct SortConfig {
     pub input_len: usize,
     pub sorting_algorithm: SortingAlgorithm,
@@ -138,38 +148,61 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
             config
         })
     };
-    let input = use_state(|| knuth_shuffle(gen_u32_vec(config.input_len)));
-    let output = use_state_eq(|| config.sorting_algorithm.sort(input.to_vec()));
-    let active_step_index: UseStateHandle<usize> = use_state_eq(|| 0);
+
+    let input = use_mut_ref(|| knuth_shuffle(gen_u32_vec(config.input_len)));
+    let output = use_mut_ref(|| input.borrow().clone());
+    let sort_result = use_mut_ref(|| config.sorting_algorithm.sort(Rc::clone(&output)));
+
     // The active step is empty at the input step, step 0.
-    let active_step = if *active_step_index == 0 {
-        vec![]
-    } else {
-        (*output.steps)[*active_step_index - 1].clone()
-    };
-    let output_at_active_step = use_state_eq(|| {
-        get_output_at_step_index(&*(*input).borrow(), &output.steps, *active_step_index)
+    let active_step = use_state(std::vec::Vec::<SortCommand<u32>>::new);
+    let active_step_index: UseStateHandle<usize> = use_state_eq(|| 0);
+
+    {
+        let active_step = active_step.clone();
+        let sort_result = Rc::clone(&sort_result);
+
+        use_effect_with_deps(
+            move |i| {
+                active_step.set(if **i == 0 {
+                    vec![]
+                } else {
+                    sort_result.borrow().steps[**i - 1].clone()
+                });
+
+                || ()
+            },
+            active_step_index.clone(),
+        );
+    }
+
+    let output_at_active_step = use_state(|| {
+        get_output_at_step_index(
+            &input.borrow(),
+            &sort_result.borrow().steps,
+            *active_step_index,
+        )
     });
 
     let route = use_route::<SortingAlgorithmsRoute>();
 
     let update_values = {
         let input = input.clone();
-        let output = output.clone();
+        let sort_result = sort_result.clone();
         let active_step_index = active_step_index.clone();
         let output_at_active_step = output_at_active_step.clone();
 
         move |new_input: Vec<u32>, config: &SortConfig| {
-            let new_output = config.sorting_algorithm.sort(new_input.clone());
-            let new_active_step = 0;
-            active_step_index.set(new_active_step);
+            // Cloning here is necessary if we want to keep the input
+            *input.borrow_mut() = new_input.clone();
+            *output.borrow_mut() = new_input;
+            *sort_result.borrow_mut() = config.sorting_algorithm.sort(Rc::clone(&output));
+            active_step_index.set(0);
+
             output_at_active_step.set(get_output_at_step_index(
-                &*(*new_input).borrow(),
-                &new_output.steps,
-                new_active_step,
+                &input.borrow(),
+                &sort_result.borrow().steps,
+                0,
             ));
-            input.set(new_input);
-            output.set(new_output);
         }
     };
 
@@ -213,13 +246,13 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
 
     let change_step = {
         let active_step_index = active_step_index.clone();
-        let output = output.clone();
+        let sort_result = Rc::clone(&sort_result);
         let output_at_active_step = output_at_active_step.clone();
 
         Callback::from(move |val: usize| {
             output_at_active_step.set(get_output_at_step_index(
-                &*(*input).borrow(),
-                &output.steps,
+                &input.borrow(),
+                &sort_result.borrow().steps,
                 val,
             ));
             active_step_index.set(val);
@@ -259,7 +292,7 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
     ));
 
     use_sort_audio(
-        output_at_active_step.to_vec(),
+        output_at_active_step.clone(),
         active_step.clone(),
         config.audio_config.clone(),
     );
@@ -280,16 +313,16 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
 
             <main>
                 <div class="visualization">
-                    <span>{ format!("{} steps, {:?} ms", output.steps.len(), &output.duration.unwrap().as_millis()) }</span>
+                    <span>{ format!("{} steps, {:?} ms", sort_result.borrow().steps.len(), &sort_result.borrow().duration.unwrap().as_millis()) }</span>
 
                     <SortGraph
-                        items={output_at_active_step.to_vec()}
-                        step={active_step.to_vec()}
+                        items={output_at_active_step.clone()}
+                        step={active_step.clone()}
                     />
 
                     <StepSlider
                         active_step_index={*active_step_index}
-                        max={output.steps.len()}
+                        max={sort_result.borrow().steps.len()}
                         on_change={change_step}
                         playback_time={config.playback_time}
                     />

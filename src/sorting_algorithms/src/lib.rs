@@ -5,6 +5,8 @@ pub mod insertion_sort;
 pub mod merge_sort;
 pub mod quicksort;
 
+use std::{cell::RefCell, rc::Rc};
+
 pub use bubble_sort::bubble_sort;
 pub use bucket_sort::bucket_sort;
 pub use heapsort::heapsort;
@@ -15,13 +17,14 @@ pub use quicksort::quicksort;
 /// Runs a given sorting algorithm on given items.
 /// Tracks the duration of running the algorithm and returns a [`SortResult`].
 pub fn run_sort<T: Clone + Copy + Ord>(
-    items: Vec<T>,
-    algorithm: fn(Vec<T>, Vec<Vec<SortCommand<T>>>) -> (Vec<T>, Vec<Vec<SortCommand<T>>>),
+    items: Rc<RefCell<Vec<T>>>,
+    algorithm: fn(&mut Vec<T>, &mut Vec<Vec<SortCommand<T>>>),
 ) -> SortResult<T> {
+    let mut steps = vec![];
     let start = instant::Instant::now();
-    let (items, steps) = algorithm(items, vec![]);
+    algorithm(&mut items.borrow_mut(), &mut steps);
     let duration = start.elapsed();
-    SortResult::new(items, Some(duration), steps)
+    SortResult::new(Some(duration), steps)
 }
 
 /// A command used when sorting a collection in steps.
@@ -65,20 +68,11 @@ pub fn run_sort_steps<T: Clone + Copy>(items: &mut [T], steps: &[Vec<SortCommand
 
 #[derive(Clone, PartialEq)]
 pub struct SortResult<T: Clone + Copy + PartialEq + PartialOrd> {
-    pub output: Vec<T>,
     pub duration: Option<instant::Duration>,
     pub steps: Vec<Vec<SortCommand<T>>>,
 }
 impl<T: Clone + Copy + PartialEq + PartialOrd> SortResult<T> {
-    pub fn new(
-        value: Vec<T>,
-        duration: Option<instant::Duration>,
-        steps: Vec<Vec<SortCommand<T>>>,
-    ) -> Self {
-        Self {
-            output: value,
-            duration,
-            steps,
-        }
+    pub fn new(duration: Option<instant::Duration>, steps: Vec<Vec<SortCommand<T>>>) -> Self {
+        Self { duration, steps }
     }
 }

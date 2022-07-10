@@ -1,14 +1,11 @@
 use crate::SortCommand;
 
-pub fn heapsort<T: Clone + Copy + Ord>(
-    mut items: Vec<T>,
-    mut steps: Vec<Vec<SortCommand<T>>>,
-) -> (Vec<T>, Vec<Vec<SortCommand<T>>>) {
+pub fn heapsort<T: Clone + Copy + Ord>(items: &mut Vec<T>, steps: &mut Vec<Vec<SortCommand<T>>>) {
     let size = items.len();
 
     // Build heap
     for i in (0..=size / 2 - 1).rev() {
-        heapify(&mut items, size, i, &mut steps);
+        heapify(items, size, i, steps);
     }
 
     // Extract elements from heap
@@ -18,10 +15,8 @@ pub fn heapsort<T: Clone + Copy + Ord>(
         steps.push(vec![SortCommand::Swap(0, i)]);
 
         // Max heapify the reduced heap
-        heapify(&mut items, i, 0, &mut steps);
+        heapify(items, i, 0, steps);
     }
-
-    (items, steps)
 }
 
 fn heapify<T: Clone + Copy + Ord>(

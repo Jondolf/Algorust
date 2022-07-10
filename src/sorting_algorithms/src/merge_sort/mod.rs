@@ -1,25 +1,22 @@
 use crate::SortCommand;
 
-pub fn merge_sort<T: Copy + Clone + Ord>(
-    mut items: Vec<T>,
-    mut steps: Vec<Vec<SortCommand<T>>>,
-) -> (Vec<T>, Vec<Vec<SortCommand<T>>>) {
-    items = _merge_sort(items, &mut steps, 0);
-    (items, steps)
+pub fn merge_sort<T: Copy + Clone + Ord>(items: &mut Vec<T>, steps: &mut Vec<Vec<SortCommand<T>>>) {
+    _merge_sort(items, steps, 0);
 }
 
 fn _merge_sort<T: Copy + Clone + PartialOrd>(
-    mut items: Vec<T>,
+    items: &mut Vec<T>,
     mut steps: &mut Vec<Vec<SortCommand<T>>>,
     start_i: usize,
-) -> Vec<T> {
+) {
     if items.len() > 1 {
         let middle = items.len() / 2;
-        let left_half = _merge_sort(items[0..middle].to_vec(), &mut steps, start_i);
-        let right_half = _merge_sort(items[middle..].to_vec(), &mut steps, start_i + middle);
-        items = merge(left_half, right_half, &mut steps, start_i);
+        let mut left_half = items[0..middle].to_vec();
+        let mut right_half = items[middle..].to_vec();
+        _merge_sort(&mut left_half, &mut steps, start_i);
+        _merge_sort(&mut right_half, &mut steps, start_i + middle);
+        *items = merge(left_half, right_half, &mut steps, start_i);
     }
-    items
 }
 
 fn merge<T: Copy + Clone + PartialOrd>(

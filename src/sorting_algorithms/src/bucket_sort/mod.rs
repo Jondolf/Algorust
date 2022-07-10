@@ -1,9 +1,6 @@
 use crate::{insertion_sort, SortCommand};
 
-pub fn bucket_sort(
-    mut items: Vec<u32>,
-    mut steps: Vec<Vec<SortCommand<u32>>>,
-) -> (Vec<u32>, Vec<Vec<SortCommand<u32>>>) {
+pub fn bucket_sort(items: &mut Vec<u32>, steps: &mut Vec<Vec<SortCommand<u32>>>) {
     let size = items.len();
     let k = (size as f32).sqrt().ceil() as usize; // Number of buckets
     let mut buckets: Vec<Vec<u32>> = vec![Vec::with_capacity(size / k); k];
@@ -26,7 +23,9 @@ pub fn bucket_sort(
     // Sort all buckets individually
     for i in 0..k {
         // Sort the bucket
-        let (output, sub_steps) = insertion_sort(buckets[i].clone(), vec![]);
+        let mut output = buckets[i].clone();
+        let mut sub_steps = vec![];
+        insertion_sort(&mut output, &mut sub_steps);
 
         // Offset the sort steps' indices to match their real positions in `items`
         let sub_steps = add_offset_to_step_indices(&sub_steps, bucket_start_i);
@@ -37,9 +36,7 @@ pub fn bucket_sort(
     }
 
     // Concatenate the buckets
-    items = buckets.into_iter().flatten().collect();
-
-    (items, steps)
+    *items = buckets.into_iter().flatten().collect();
 }
 
 /// Adds a given offset to the indices in [`SortCommand`]s. Useful when running a sorting algorithm inside another sorting algorithm.
