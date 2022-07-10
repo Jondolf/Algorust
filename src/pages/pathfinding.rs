@@ -14,6 +14,7 @@ use pathfinding::{
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Debug,
+    rc::Rc,
 };
 use yew::prelude::*;
 use yew_hooks::use_title;
@@ -154,29 +155,35 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
         })
     };
 
-    let maze_gen_res = use_state(|| MazeGenerationResult::new(vec![], BTreeSet::new()));
-    let graph = use_state(|| {
+    let path = use_mut_ref(Vec::<Coord>::new);
+    let walls = use_mut_ref(BTreeSet::new);
+
+    let graph = use_mut_ref(|| {
         generate_graph::<EdgeType>(
             config.graph_width,
             config.graph_height,
             config.move_diagonally,
-            maze_gen_res.walls.clone(),
+            &walls.borrow(),
         )
     });
-    let path = use_state(Vec::<Coord>::new);
-    let steps = use_state(Vec::<PathfindingStep<Coord>>::new);
+
+    let pathfinding_steps = use_mut_ref(|| PathfindingSteps::<Coord>::new(vec![]));
+    let maze_gen_steps = use_mut_ref(Vec::<MazeGenerationStep>::new);
+
+    let graph_at_pathfinding_step = use_mut_ref(BTreeMap::<Coord, VertexState>::new);
+    let walls_at_maze_gen_step = use_mut_ref(BTreeSet::new);
+
     let pathfinding_step_index = use_state(|| 0);
-    let graph_at_pathfinding_step = use_state(BTreeMap::<Coord, VertexState>::new);
     let maze_gen_step_index = use_state(|| 0);
-    let walls_at_maze_gen_step = use_state(BTreeSet::new);
-    let paused = use_state_eq(|| false);
+
+    let paused = use_state(|| false);
 
     // This should only be shown after maze generation when the user hasn't drawn any new walls.
-    let show_maze_gen_slider = use_state_eq(|| false);
+    let show_maze_gen_slider = use_state(|| false);
 
     // If the new step count is lower than the current step index, the step index is set to the step count. Otherwise it will reset to the given index.
     let update_or_reset_pathfinding_step_index = {
-        let step_count = steps.len();
+        let step_count = pathfinding_steps.borrow().len();
         let pathfinding_step_index = pathfinding_step_index.clone();
 
         move |new_step_count: usize, reset_to: usize| {
@@ -192,7 +199,7 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
 
     // If the new step count is lower than the current step index, the step index is set to the step count. Otherwise it will reset to the given index.
     let update_or_reset_maze_gen_step_index = {
-        let step_count = maze_gen_res.steps.len();
+        let step_count = maze_gen_steps.borrow().len();
         let maze_gen_step_index = maze_gen_step_index.clone();
 
         move |new_step_count: usize, reset_to: usize| {
@@ -206,36 +213,34 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
         }
     };
 
-    let update_path = {
-        let steps = steps.clone();
-        let path = path.clone();
+    let update_pathfinding_step = {
+        let graph = Rc::clone(&graph);
+        let pathfinding_steps = Rc::clone(&pathfinding_steps);
+        let path = Rc::clone(&path);
         let (start, end) = (config.start, config.end);
         let graph_at_pathfinding_step = graph_at_pathfinding_step.clone();
-        let update_or_reset_step_index = update_or_reset_pathfinding_step_index.clone();
+        let update_or_reset_pathfinding_step_index = update_or_reset_pathfinding_step_index.clone();
 
-        move |graph: &AdjacencyList<Coord, EdgeType>, config: &PathfindingConfig<EdgeType>| {
-            let (res, _) = config.algorithm.find_path(graph, start, end);
-            let new_steps = res.steps.clone().get_all();
-            let new_active_step_index = update_or_reset_step_index(new_steps.len(), 0);
-            graph_at_pathfinding_step.set(get_graph_at_step(
-                graph,
-                &new_steps,
-                new_active_step_index,
-            ));
-            path.set(res.path.clone());
-            steps.set(new_steps);
-            res
+        move |config: &PathfindingConfig<EdgeType>| {
+            let (res, _) = config.algorithm.find_path(&graph.borrow(), start, end);
+            *path.borrow_mut() = res.path;
+            *pathfinding_steps.borrow_mut() = res.steps;
+
+            let new_active_step_index =
+                update_or_reset_pathfinding_step_index(pathfinding_steps.borrow().len(), 0);
+
+            *graph_at_pathfinding_step.borrow_mut() =
+                get_graph_at_step(&pathfinding_steps.borrow().steps, new_active_step_index);
         }
     };
 
     let update_config = {
         let config = config.clone();
-        let graph = graph.clone();
-        let walls = maze_gen_res.walls.clone();
-        let pathfinding_step_index = pathfinding_step_index.clone();
-        let graph_at_pathfinding_step = graph_at_pathfinding_step.clone();
-        let update_or_reset_step_index = update_or_reset_pathfinding_step_index.clone();
-        let update_path = update_path.clone();
+        let graph = Rc::clone(&graph);
+        let walls = Rc::clone(&walls);
+        let pathfinding_steps = Rc::clone(&pathfinding_steps);
+        let update_or_reset_pathfinding_step_index = update_or_reset_pathfinding_step_index.clone();
+        let update_pathfinding_step = update_pathfinding_step.clone();
 
         Callback::from(
             move |(new_config, update_type): (
@@ -244,25 +249,20 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
             )| {
                 match update_type {
                     PathfindingConfigUpdate::UpdatePath => {
-                        update_path(&graph, &new_config);
-                        pathfinding_step_index.set(0);
+                        update_pathfinding_step(&new_config);
+                        update_or_reset_pathfinding_step_index(0, 0);
                     }
                     PathfindingConfigUpdate::UpdatePathAndGraph => {
                         let new_graph = generate_graph(
                             new_config.graph_width,
                             new_config.graph_height,
                             new_config.move_diagonally,
-                            walls.clone(),
+                            &walls.borrow(),
                         );
-                        let res = update_path(&new_graph, &new_config);
-                        let new_active_step_index = update_or_reset_step_index(res.steps.len(), 0);
+                        *graph.borrow_mut() = new_graph;
 
-                        graph_at_pathfinding_step.set(get_graph_at_step(
-                            &new_graph,
-                            &res.steps.get_all(),
-                            new_active_step_index,
-                        ));
-                        graph.set(new_graph);
+                        update_pathfinding_step(&new_config);
+                        update_or_reset_pathfinding_step_index(pathfinding_steps.borrow().len(), 0);
                     }
                     PathfindingConfigUpdate::NoUpdate => (),
                 }
@@ -275,12 +275,11 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
         let (start, end) = (config.start, config.end);
         let config = (*config).clone();
         let algorithm = config.algorithm.clone();
-        let graph = graph.clone();
-        let update_path = update_path.clone();
+        let update_pathfinding_step = update_pathfinding_step.clone();
 
         use_effect_with_deps(
             move |_| {
-                update_path(&*graph, &config);
+                update_pathfinding_step(&config);
                 || ()
             },
             (start, end, algorithm),
@@ -292,9 +291,8 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
     {
         let config = config.clone();
         let update_config = update_config.clone();
-        let graph = graph.clone();
         let graph_at_pathfinding_step = graph_at_pathfinding_step.clone();
-        let steps = steps.clone();
+        let pathfinding_steps = Rc::clone(&pathfinding_steps);
 
         use_effect_with_deps(
             move |route| {
@@ -310,7 +308,8 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
                         },
                         PathfindingConfigUpdate::UpdatePath,
                     ));
-                    graph_at_pathfinding_step.set(get_graph_at_step(&*graph, &*steps, 0));
+                    *graph_at_pathfinding_step.borrow_mut() =
+                        get_graph_at_step(&pathfinding_steps.borrow().steps, 0);
                 } else {
                     update_config.emit(((*config).clone(), PathfindingConfigUpdate::NoUpdate));
                 };
@@ -323,30 +322,34 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
     use_title(format!("{} - Pathfinding", config.algorithm.name));
 
     let change_step = {
-        let graph = graph.clone();
         let graph_at_pathfinding_step = graph_at_pathfinding_step.clone();
-        let steps = steps.clone();
+        let pathfinding_steps = Rc::clone(&pathfinding_steps);
         let pathfinding_step_index = pathfinding_step_index.clone();
 
         Callback::from(move |val| {
+            *graph_at_pathfinding_step.borrow_mut() =
+                get_graph_at_step(&pathfinding_steps.borrow().steps, val);
             pathfinding_step_index.set(val);
-            graph_at_pathfinding_step.set(get_graph_at_step(&graph, &*steps, val));
         })
     };
 
     let change_maze_gen_step = {
-        let steps = maze_gen_res.steps.clone();
+        let maze_gen_steps = Rc::clone(&maze_gen_steps);
         let maze_gen_step_index = maze_gen_step_index.clone();
-        let walls_at_maze_gen_step = walls_at_maze_gen_step.clone();
+        let walls_at_maze_gen_step = Rc::clone(&walls_at_maze_gen_step);
 
-        Callback::from(move |val| {
+        Callback::from(move |val: usize| {
+            *walls_at_maze_gen_step.borrow_mut() = maze_gen_steps.borrow()
+                [val.min(maze_gen_steps.borrow().len() - 1)]
+            .walls
+            .clone();
             maze_gen_step_index.set(val);
-            walls_at_maze_gen_step.set(steps[val.min(steps.len() - 1)].walls.clone());
         })
     };
 
     let on_tool_change = {
         let config = config.clone();
+
         Callback::from(move |active_tool| {
             config.set(PathfindingConfig {
                 active_tool,
@@ -357,15 +360,14 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
 
     let on_cell_click = {
         let config = config.clone();
-        let graph = graph.clone();
-        let maze_gen_res = maze_gen_res.clone();
-        let walls_at_maze_gen_step = walls_at_maze_gen_step.clone();
+        let graph = Rc::clone(&graph);
+        let walls = Rc::clone(&walls);
         let paused = paused.clone();
         let show_maze_gen_slider = show_maze_gen_slider.clone();
 
         Callback::from(move |vertex| {
             if vertex != config.start && vertex != config.end {
-                if graph.hash_map.contains_key(&vertex) {
+                if graph.borrow().hash_map.contains_key(&vertex) {
                     match config.active_tool {
                         PathTool::Start => {
                             config.set(PathfindingConfig {
@@ -380,25 +382,13 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
                             });
                         }
                         PathTool::Wall => {
-                            let mut new_walls = maze_gen_res.walls.clone();
-                            new_walls.insert(vertex);
-                            walls_at_maze_gen_step.set(new_walls.clone());
-                            maze_gen_res.set(MazeGenerationResult {
-                                walls: new_walls,
-                                ..(*maze_gen_res).clone()
-                            });
+                            walls.borrow_mut().insert(vertex);
                             paused.set(true);
                             show_maze_gen_slider.set(false);
                         }
                     }
                 } else if config.active_tool == PathTool::Wall {
-                    let mut new_walls = maze_gen_res.walls.clone();
-                    new_walls.remove(&vertex);
-                    walls_at_maze_gen_step.set(new_walls.clone());
-                    maze_gen_res.set(MazeGenerationResult {
-                        walls: new_walls,
-                        ..(*maze_gen_res).clone()
-                    });
+                    walls.borrow_mut().remove(&vertex);
                     paused.set(true);
                     show_maze_gen_slider.set(false);
                 }
@@ -408,12 +398,12 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
 
     let on_draw_end = {
         let config = config.clone();
-        let graph = graph.clone();
-        let graph_at_pathfinding_step = graph_at_pathfinding_step.clone();
-        let walls = maze_gen_res.walls.clone();
+        let graph = Rc::clone(&graph);
+        let walls = Rc::clone(&walls);
+        let pathfinding_steps = Rc::clone(&pathfinding_steps);
         let paused = paused.clone();
-        let update_path = update_path.clone();
-        let update_or_reset_step_index = update_or_reset_pathfinding_step_index.clone();
+        let update_pathfinding_step = update_pathfinding_step.clone();
+        let update_or_reset_pathfinding_step_index = update_or_reset_pathfinding_step_index.clone();
 
         Callback::from(move |_| {
             if config.active_tool == PathTool::Wall {
@@ -421,101 +411,78 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
                     config.graph_width,
                     config.graph_height,
                     config.move_diagonally,
-                    walls.clone(),
+                    &walls.borrow(),
                 );
+                *graph.borrow_mut() = new_graph;
 
-                let res = update_path(&new_graph, &config);
-                let new_active_step_index = update_or_reset_step_index(res.steps.len(), 0);
-
-                graph_at_pathfinding_step.set(get_graph_at_step(
-                    &new_graph,
-                    &res.steps.get_all(),
-                    new_active_step_index,
-                ));
-                graph.set(new_graph);
+                update_pathfinding_step(&config);
+                update_or_reset_pathfinding_step_index(pathfinding_steps.borrow().len(), 0);
             }
             paused.set(false);
         })
     };
 
     let on_clear_walls = {
-        let maze_gen_res = maze_gen_res.clone();
         let config = config.clone();
-        let graph = graph.clone();
-        let graph_at_pathfinding_step = graph_at_pathfinding_step.clone();
-        let walls_at_maze_gen_step = walls_at_maze_gen_step.clone();
-        let update_path = update_path.clone();
-        let update_or_reset_step_index = update_or_reset_pathfinding_step_index.clone();
+        let graph = Rc::clone(&graph);
+        let walls = Rc::clone(&walls);
+        let walls_at_maze_gen_step = Rc::clone(&walls_at_maze_gen_step);
+        let pathfinding_steps = Rc::clone(&pathfinding_steps);
+        let maze_gen_steps = Rc::clone(&maze_gen_steps);
+        let update_pathfinding_step = update_pathfinding_step.clone();
         let show_maze_gen_slider = show_maze_gen_slider.clone();
 
         Callback::from(move |_| {
-            let walls = BTreeSet::new();
-
-            walls_at_maze_gen_step.set(walls.clone());
-            maze_gen_res.set(MazeGenerationResult {
-                walls: walls.clone(),
-                steps: vec![],
-            });
+            walls.borrow_mut().clear();
+            walls_at_maze_gen_step.borrow_mut().clear();
+            maze_gen_steps.borrow_mut().clear();
 
             let new_graph = generate_graph(
                 config.graph_width,
                 config.graph_height,
                 config.move_diagonally,
-                walls,
+                &walls.borrow(),
             );
+            *graph.borrow_mut() = new_graph;
 
-            let res = update_path(&new_graph, &config);
-            let new_active_step_index = update_or_reset_step_index(res.steps.len(), 0);
-
-            graph_at_pathfinding_step.set(get_graph_at_step(
-                &new_graph,
-                &res.steps.get_all(),
-                new_active_step_index,
-            ));
-            graph.set(new_graph);
+            update_pathfinding_step(&config);
+            update_or_reset_pathfinding_step_index(pathfinding_steps.borrow().len(), 0);
 
             show_maze_gen_slider.set(false);
         })
     };
 
     let on_generate_maze = {
-        let graph_at_pathfinding_step = graph_at_pathfinding_step.clone();
-        let walls_at_maze_gen_step = walls_at_maze_gen_step.clone();
-        let maze_gen_res = maze_gen_res.clone();
         let config = config.clone();
+        let walls = Rc::clone(&walls);
         let show_maze_gen_slider = show_maze_gen_slider.clone();
+        let walls_at_maze_gen_step = walls_at_maze_gen_step.clone();
+        let maze_gen_steps = Rc::clone(&maze_gen_steps);
 
         Callback::from(move |_| {
-            let new_maze_gen_res = generate_maze(config.clone());
+            // Generate maze
+            let res = generate_maze(config.clone());
+            *walls.borrow_mut() = res.walls;
+            *maze_gen_steps.borrow_mut() = res.steps;
+
+            let new_maze_gen_step_index = update_or_reset_maze_gen_step_index(
+                maze_gen_steps.borrow().len(),
+                maze_gen_steps.borrow().len(),
+            );
+            *walls_at_maze_gen_step.borrow_mut() = maze_gen_steps.borrow()
+                [new_maze_gen_step_index.min(maze_gen_steps.borrow().len() - 1)]
+            .walls
+            .clone();
 
             let new_graph = generate_graph(
                 config.graph_width,
                 config.graph_height,
                 config.move_diagonally,
-                new_maze_gen_res.walls.clone(),
+                &walls.borrow(),
             );
+            *graph.borrow_mut() = new_graph;
 
-            let new_maze_gen_step_index = update_or_reset_maze_gen_step_index(
-                new_maze_gen_res.steps.len(),
-                new_maze_gen_res.steps.len(),
-            );
-            walls_at_maze_gen_step.set(
-                new_maze_gen_res.steps
-                    [new_maze_gen_step_index.min(new_maze_gen_res.steps.len() - 1)]
-                .walls
-                .clone(),
-            );
-            maze_gen_res.set(new_maze_gen_res);
-
-            let res = update_path(&new_graph, &config);
-            let new_active_step_index = update_or_reset_pathfinding_step_index(res.steps.len(), 0);
-
-            graph_at_pathfinding_step.set(get_graph_at_step(
-                &new_graph,
-                &res.steps.get_all(),
-                new_active_step_index,
-            ));
-            graph.set(new_graph);
+            update_pathfinding_step(&config);
 
             show_maze_gen_slider.set(true);
         })
@@ -541,13 +508,19 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
                     <PathGrid
                         width={config.graph_width}
                         height={config.graph_height}
-                        graph={(*graph_at_pathfinding_step).clone()}
-                        walls={(*walls_at_maze_gen_step).clone()}
-                        path={
-                            if *pathfinding_step_index >= steps.len() {
-                                (*path).clone()
+                        graph={Rc::clone(&graph_at_pathfinding_step)}
+                        walls={
+                            if *show_maze_gen_slider {
+                                Rc::clone(&walls_at_maze_gen_step)
                             } else {
-                                Vec::new()
+                                Rc::clone(&walls)
+                            }
+                        }
+                        path={
+                            if *pathfinding_step_index >= pathfinding_steps.borrow().len() && path.borrow().len() > 0 {
+                                Some(Rc::clone(&path))
+                            } else {
+                                None
                             }
                         }
                         start={config.start}
@@ -557,9 +530,9 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
                     />
 
                     <StepSlider
-                        label={format!("Pathfinding steps ({}/{})", *pathfinding_step_index, steps.len())}
+                        label={format!("Pathfinding steps ({}/{})", *pathfinding_step_index, pathfinding_steps.borrow().len())}
                         active_step_index={*pathfinding_step_index}
-                        max={steps.len()}
+                        max={pathfinding_steps.borrow().len()}
                         on_change={change_step}
                         playback_time={config.playback_time}
                         disabled={*paused}
@@ -569,9 +542,9 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
                         if *show_maze_gen_slider {
                             html! {
                                 <StepSlider
-                                    label={format!("Maze generation steps ({}/{})", *maze_gen_step_index, maze_gen_res.steps.len())}
+                                    label={format!("Maze generation steps ({}/{})", *maze_gen_step_index, maze_gen_steps.borrow().len())}
                                     active_step_index={*maze_gen_step_index}
-                                    max={maze_gen_res.steps.len()}
+                                    max={maze_gen_steps.borrow().len()}
                                     on_change={change_maze_gen_step}
                                     playback_time={config.playback_time}
                                     disabled={*paused}
@@ -587,16 +560,15 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
     }
 }
 
-fn get_graph_at_step<V: Vertex, E: Clone>(
-    graph: &AdjacencyList<V, E>,
+fn get_graph_at_step<V: Vertex>(
     steps: &[PathfindingStep<V>],
     step_index: usize,
 ) -> BTreeMap<V, VertexState> {
     let mut new = BTreeMap::new();
-    for v in graph.hash_map.keys() {
-        new.insert(*v, VertexState::NotVisited);
-    }
-    for step in steps[0..step_index.min(steps.len())].iter() {
+    for (i, step) in steps.iter().enumerate() {
+        if i >= step_index.min(steps.len()) {
+            break;
+        }
         for (vertex, state) in step.states.iter() {
             new.insert(*vertex, *state);
         }

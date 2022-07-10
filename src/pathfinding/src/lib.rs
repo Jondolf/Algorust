@@ -221,7 +221,7 @@ pub fn run_pathfinding<V: Vertex, E: Clone>(
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct PathfindingSteps<V: Vertex> {
-    steps: Vec<PathfindingStep<V>>,
+    pub steps: Vec<PathfindingStep<V>>,
 }
 impl<V: Vertex> PathfindingSteps<V> {
     pub fn new(steps: Vec<PathfindingStep<V>>) -> Self {
@@ -294,7 +294,7 @@ pub fn generate_graph<E: Edge>(
     width: usize,
     height: usize,
     diagonals: bool,
-    walls: BTreeSet<Coord>,
+    walls: &BTreeSet<Coord>,
 ) -> AdjacencyList<Coord, E> {
     let mut graph = AdjacencyList::<Coord, E>::new(BTreeMap::new());
 

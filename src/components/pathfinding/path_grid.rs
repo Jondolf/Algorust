@@ -1,7 +1,9 @@
 use pathfinding::{Coord, VertexState};
 use std::{
+    cell::RefCell,
     collections::{BTreeMap, BTreeSet},
     fmt::Write,
+    rc::Rc,
 };
 use wasm_bindgen::JsCast;
 use web_sys::Element;
@@ -15,9 +17,9 @@ const SCALE: usize = 100;
 pub struct PathGridProps {
     pub width: usize,
     pub height: usize,
-    pub graph: BTreeMap<Coord, VertexState>,
-    pub walls: BTreeSet<Coord>,
-    pub path: Vec<Coord>,
+    pub graph: Rc<RefCell<BTreeMap<Coord, VertexState>>>,
+    pub walls: Rc<RefCell<BTreeSet<Coord>>>,
+    pub path: Option<Rc<RefCell<Vec<Coord>>>>,
     pub start: Coord,
     pub end: Coord,
     pub on_cell_click: Callback<Coord>,
@@ -43,47 +45,50 @@ pub fn path_grid(props: &PathGridProps) -> Html {
 
     let path_grid_ref = use_node_ref();
 
-    let onmouseover = Callback::from(move |(e, x, y): (MouseEvent, isize, isize)| {
+    // Emit the coordinates of the hovered cell if the mouse button is down
+    let oncellclick = Callback::from(move |(e, x, y): (MouseEvent, isize, isize)| {
         e.prevent_default();
         if e.buttons() == 1 {
             on_cell_click.emit(Coord::new(x, y));
         }
     });
+
+    // Path string used for svg path
     let path_str = use_state_eq(String::new);
 
+    // Update path_str
     {
         let path_str = path_str.clone();
 
-        use_effect_with_deps(
-            move |path| {
+        use_effect(move || {
+            if let Some(path) = path {
                 let mut new_path_str = String::new();
 
-                if !path.is_empty() {
+                let _ = write!(
+                    &mut new_path_str,
+                    "M {} {}",
+                    path.borrow()[0].x as usize * SCALE + SCALE / 2,
+                    path.borrow()[0].y as usize * SCALE + SCALE / 2
+                );
+
+                for vertex in path.borrow()[1..path.borrow().len()].iter() {
+                    let vertex = *vertex;
+                    let (x, y) = (vertex.x as usize, vertex.y as usize);
                     let _ = write!(
                         &mut new_path_str,
-                        "M {} {}",
-                        path[0].x as usize * SCALE + SCALE / 2,
-                        path[0].y as usize * SCALE + SCALE / 2
+                        " L {} {}",
+                        x * SCALE + SCALE / 2,
+                        y * SCALE + SCALE / 2
                     );
-
-                    for vertex in path[1..path.len()].iter() {
-                        let vertex = *vertex;
-                        let (x, y) = (vertex.x as usize, vertex.y as usize);
-                        let _ = write!(
-                            &mut new_path_str,
-                            " L {} {}",
-                            x * SCALE + SCALE / 2,
-                            y * SCALE + SCALE / 2
-                        );
-                    }
                 }
 
                 path_str.set(new_path_str);
+            } else {
+                path_str.set(String::default())
+            }
 
-                || ()
-            },
-            path,
-        );
+            || ()
+        });
     }
 
     let onmouseover = {
@@ -100,11 +105,12 @@ pub fn path_grid(props: &PathGridProps) -> Html {
                 (x_px / rect_width_px).floor() as isize,
                 (y_px / rect_height_px).floor() as isize,
             );
-            onmouseover.emit((e, x, y))
+            oncellclick.emit((e, x, y))
         }
     };
 
     let wall_cells = walls
+        .borrow()
         .iter()
         .map(|vertex| html! { <GridCell class="wall" x={vertex.x} y={vertex.y } key={format!("{}, {}", vertex.x, vertex.y)} /> })
         .collect::<Html>();
@@ -113,7 +119,7 @@ pub fn path_grid(props: &PathGridProps) -> Html {
         .map(|y| {
             (0..width as isize)
                 .map(|x| {
-                    if let Some((vertex, state)) = graph.get_key_value(&Coord::new(x, y)) {
+                    if let Some((vertex, state)) = graph.borrow().get_key_value(&Coord::new(x, y)) {
                         if *vertex != props.start && *vertex != props.end {
                             match state {
                                 VertexState::NewVisited => html! {
