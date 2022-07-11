@@ -39,12 +39,12 @@ fn _iterative_dfs<V: Vertex, E: Edge>(
             steps.init_step();
             steps.insert_state_to_last_step(vertex, VertexState::NewVisited);
 
-            let neighbors = adjacency_list.get_neighbors(&vertex).unwrap().clone();
-
-            for (neighbor, _) in neighbors.iter().rev() {
-                if !visited.contains(neighbor) {
-                    stack.push(*neighbor);
-                    vertex_parents.insert(*neighbor, vertex);
+            if let Some(neighbors) = adjacency_list.get_neighbors(&vertex) {
+                for (neighbor, _) in neighbors.iter().rev() {
+                    if !visited.contains(neighbor) {
+                        stack.push(*neighbor);
+                        vertex_parents.insert(*neighbor, vertex);
+                    }
                 }
             }
         }
