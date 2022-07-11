@@ -216,6 +216,7 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
     let update_pathfinding_step = {
         let graph = Rc::clone(&graph);
         let pathfinding_steps = Rc::clone(&pathfinding_steps);
+        let old_pathfinding_step_index = *pathfinding_step_index;
         let path = Rc::clone(&path);
         let (start, end) = (config.start, config.end);
         let graph_at_pathfinding_step = graph_at_pathfinding_step.clone();
@@ -229,8 +230,13 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
             let new_active_step_index =
                 update_or_reset_pathfinding_step_index(pathfinding_steps.borrow().len(), 0);
 
-            *graph_at_pathfinding_step.borrow_mut() =
-                get_graph_at_step(&pathfinding_steps.borrow().steps, new_active_step_index);
+            update_graph_at_pathfinding_step(
+                &mut graph_at_pathfinding_step.borrow_mut(),
+                &pathfinding_steps.borrow().steps,
+                new_active_step_index,
+                old_pathfinding_step_index.min(pathfinding_steps.borrow().len()),
+                true,
+            );
         }
     };
 
@@ -308,8 +314,13 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
                         },
                         PathfindingConfigUpdate::UpdatePath,
                     ));
-                    *graph_at_pathfinding_step.borrow_mut() =
-                        get_graph_at_step(&pathfinding_steps.borrow().steps, 0);
+                    update_graph_at_pathfinding_step(
+                        &mut graph_at_pathfinding_step.borrow_mut(),
+                        &pathfinding_steps.borrow().steps,
+                        0,
+                        0,
+                        true,
+                    );
                 } else {
                     update_config.emit(((*config).clone(), PathfindingConfigUpdate::NoUpdate));
                 };
@@ -327,8 +338,13 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
         let pathfinding_step_index = pathfinding_step_index.clone();
 
         Callback::from(move |val| {
-            *graph_at_pathfinding_step.borrow_mut() =
-                get_graph_at_step(&pathfinding_steps.borrow().steps, val);
+            update_graph_at_pathfinding_step(
+                &mut graph_at_pathfinding_step.borrow_mut(),
+                &pathfinding_steps.borrow().steps,
+                val,
+                *pathfinding_step_index,
+                false,
+            );
             pathfinding_step_index.set(val);
         })
     };
@@ -560,20 +576,62 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
     }
 }
 
-fn get_graph_at_step<V: Vertex>(
+fn update_graph_at_pathfinding_step<V: Vertex>(
+    graph: &mut BTreeMap<V, VertexState>,
     steps: &[PathfindingStep<V>],
-    step_index: usize,
-) -> BTreeMap<V, VertexState> {
-    let mut new = BTreeMap::new();
-    for (i, step) in steps.iter().enumerate() {
-        if i >= step_index.min(steps.len()) {
-            break;
+    step_i: usize,
+    prev_step_i: usize,
+    force_from_start: bool,
+) {
+    // We use a reference to a slice to avoid cloning
+    let steps_to_execute: &[PathfindingStep<V>];
+    let run_from_start = force_from_start || step_i.abs_diff(0) < step_i.abs_diff(prev_step_i);
+    let mut execute_in_reverse = false;
+
+    // Get steps to execute
+    if !run_from_start {
+        // Execute steps between previous and current step indices
+        execute_in_reverse = step_i < prev_step_i;
+        if !execute_in_reverse {
+            // Going forwards in steps
+            steps_to_execute = &steps[prev_step_i..step_i];
+        } else {
+            // Going backwards in steps
+            steps_to_execute = &steps[step_i..prev_step_i];
         }
-        for (vertex, state) in step.states.iter() {
-            new.insert(*vertex, *state);
+    } else {
+        // Execute all steps from start to current step index
+        graph.clear();
+        steps_to_execute = &steps[0..step_i];
+    }
+
+    execute_steps(graph, steps_to_execute, execute_in_reverse);
+}
+
+fn execute_steps<V: Vertex>(
+    graph: &mut BTreeMap<V, VertexState>,
+    steps: &[PathfindingStep<V>],
+    reverse: bool,
+) {
+    if !reverse {
+        for step in steps.iter() {
+            for (vertex, state) in step.states.iter() {
+                graph.insert(*vertex, *state);
+            }
+        }
+    } else {
+        for step in steps.iter().rev() {
+            for (vertex, state) in step.states.iter() {
+                // Because we are going backwards in steps, we use the "previous" vertex states
+                let state = match *state {
+                    VertexState::NewVisited => VertexState::NotVisited,
+                    VertexState::NotVisited => VertexState::Visited,
+                    VertexState::Visited => VertexState::NewVisited,
+                };
+                graph.insert(*vertex, state);
+            }
         }
     }
-    new
 }
 
 fn generate_maze<E: Edge>(config: UseStateHandle<PathfindingConfig<E>>) -> MazeGenerationResult {
@@ -597,6 +655,7 @@ fn generate_maze<E: Edge>(config: UseStateHandle<PathfindingConfig<E>>) -> MazeG
         maze.walls.remove(&neighbor);
     }
 
+    // I count removing the walls as a step here even though it's not really a part of the actual maze generation
     maze.steps.push(MazeGenerationStep::new(maze.walls.clone()));
 
     maze
