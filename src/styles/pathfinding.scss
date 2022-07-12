@@ -1,66 +1,29 @@
 #Pathfinding {
   .path-grid {
-    display: flex;
     width: 100%;
     max-height: calc(100vh - var(--top-bar-height) - calc(var(--main-padding) * 2) - var(--step-slider-height) - 10rem);
     margin: auto;
     background-color: var(--bg-color-1);
+    position: relative;
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+
+    canvas {
+      position: absolute;
+      height: 100%;
+    }
 
     svg {
-      overflow: hidden;
-      margin: auto;
-    }
-
-    .grid-cell {
-      aspect-ratio: 1/1;
-      box-sizing: border-box;
-      outline: 1px solid hsla(0, 0%, 50%, 20%);
-
-      &.start {
-        fill: var(--color-accent-1);
-        z-index: 2;
-      }
-
-      &.end {
-        fill: orangered;
-        z-index: 2;
-      }
-
-      &.wall {
-        fill: #ccc;
-        outline: none;
-      }
-
-      &.unvisited {
-        fill: transparent;
-      }
-
-      &.visited {
-        fill: #0066ff99;
-      }
-
-      &.new-visited {
-        fill: #00bbff;
-      }
-    }
-
-    .grid {
-      width: calc(100% + 3px);
-      height: calc(100% + 3px);
+      position: absolute;
+      overflow: visible;
     }
 
     #gridPattern path {
       stroke: hsla(0, 0%, 50%, 30%);
       stroke-width: 3;
       fill: none;
-    }
-
-    .path {
-      stroke: orange;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      fill: none;
-      z-index: 1;
     }
   }
 
@@ -85,40 +48,6 @@
       &.active {
         background: var(--bg-color-2);
       }
-    }
-  }
-
-  @keyframes path {
-    0% {
-      background-color: blue;
-    }
-
-    100% {
-      background-color: orange;
-    }
-  }
-
-  @keyframes visited {
-    0% {
-      transform: scale(0.3);
-      background-color: rgba(0, 217, 159);
-    }
-
-    100% {
-      transform: scale(1);
-      background-color: blue;
-    }
-  }
-
-  @keyframes newVisited {
-    0% {
-      transform: scale(0.3);
-      background-color: white;
-    }
-
-    100% {
-      transform: scale(1);
-      background-color: rgba(0, 217, 159);
     }
   }
 }
