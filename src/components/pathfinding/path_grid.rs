@@ -323,7 +323,7 @@ pub fn path_grid(props: &PathGridProps) -> Html {
             draw_walls();
             || ()
         },
-        (width, height, canvas_container_size),
+        (width, height, background_canvas_size),
     );
 
     let onmouseover = {
@@ -354,8 +354,8 @@ pub fn path_grid(props: &PathGridProps) -> Html {
             <canvas
                 ref={background_canvas_ref}
                 style={format!("z-index: 1; aspect-ratio: {} / {}; max-width: {}px; max-height: {}px", width, height, canvas_container_size.0, canvas_container_size.1)}
-                width={canvas_container_size.0.to_string()}
-                height={canvas_container_size.1.to_string()}
+                width={background_canvas_size.0.to_string()}
+                height={background_canvas_size.1.to_string()}
             >
             </canvas>
 
@@ -393,15 +393,15 @@ pub fn path_grid(props: &PathGridProps) -> Html {
             <canvas
                 ref={foreground_canvas_ref}
                 style={format!("z-index: 3; aspect-ratio: {} / {};", width, height, )}
-                width={canvas_container_size.0.to_string()}
-                height={canvas_container_size.1.to_string()}
+                width={background_canvas_size.0.to_string()}
+                height={background_canvas_size.1.to_string()}
             >
             </canvas>
             <canvas
                 ref={wall_canvas_ref}
                 style={format!("z-index: 4; aspect-ratio: {} / {};", width, height, )}
-                width={canvas_container_size.0.to_string()}
-                height={canvas_container_size.1.to_string()}
+                width={background_canvas_size.0.to_string()}
+                height={background_canvas_size.1.to_string()}
                 onmouseup={move |_| on_draw_end.emit(())}
                 onmousedown={onmouseover.clone()}
                 onmousemove={onmouseover}
