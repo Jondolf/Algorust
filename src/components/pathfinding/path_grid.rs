@@ -39,7 +39,7 @@ pub struct PathGridProps {
     pub path: Option<Rc<RefCell<Vec<Coord>>>>,
     pub start: Coord,
     pub end: Coord,
-    pub on_cell_click: Callback<Coord>,
+    pub on_click_cell: Callback<Coord>,
     pub on_draw_end: Callback<()>,
 }
 
@@ -51,7 +51,7 @@ pub fn path_grid(props: &PathGridProps) -> Html {
         graph,
         walls,
         path,
-        on_cell_click,
+        on_click_cell,
         on_draw_end,
         ..
     } = props.clone();
@@ -86,7 +86,7 @@ pub fn path_grid(props: &PathGridProps) -> Html {
     let oncellclick = Callback::from(move |(e, x, y): (MouseEvent, isize, isize)| {
         e.prevent_default();
         if e.buttons() == 1 {
-            on_cell_click.emit(Coord::new(x, y));
+            on_click_cell.emit(Coord::new(x, y));
         }
     });
 
@@ -343,9 +343,6 @@ pub fn path_grid(props: &PathGridProps) -> Html {
             oncellclick.emit((e, x, y))
         }
     };
-
-    let canvas_width = canvas_container_size.0 as f32;
-    let canvas_height = canvas_container_size.1;
 
     html! {
         <div
