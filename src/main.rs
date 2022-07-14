@@ -6,7 +6,11 @@ mod hooks;
 mod pages;
 mod utils;
 
+use gloo_storage::{LocalStorage, Storage};
+use hooks::use_color_scheme::{use_color_scheme, ColorScheme, ColorSchemeMode};
+use web_sys::window;
 use yew::prelude::*;
+use yew_hooks::use_update;
 use yew_router::prelude::*;
 
 #[derive(Clone, Debug, Routable, PartialEq)]
@@ -46,21 +50,79 @@ fn switch(routes: &Route) -> Html {
 
 #[function_component(App)]
 fn app() -> Html {
+    let color_scheme = use_color_scheme();
+    let update = use_update();
+
+    use_effect_with_deps(
+        move |_| {
+            window()
+                .unwrap()
+                .document()
+                .unwrap()
+                .body()
+                .unwrap()
+                .set_class_name(&color_scheme.to_string().to_lowercase());
+            || ()
+        },
+        color_scheme,
+    );
+
+    let toggle_theme = {
+        Callback::from(move |_| {
+            let next_color_scheme = match LocalStorage::get("app-color-scheme-mode").unwrap() {
+                ColorSchemeMode::Auto => match LocalStorage::get("preferred-color-scheme").unwrap()
+                {
+                    ColorScheme::Light => ColorScheme::Dark,
+                    ColorScheme::Dark => ColorScheme::Light,
+                },
+                ColorSchemeMode::Light => ColorScheme::Dark,
+                ColorSchemeMode::Dark => ColorScheme::Light,
+            };
+            LocalStorage::set("app-color-scheme-mode", next_color_scheme.to_string()).unwrap();
+            window()
+                .unwrap()
+                .document()
+                .unwrap()
+                .body()
+                .unwrap()
+                .set_class_name(&next_color_scheme.to_string().to_lowercase());
+            update();
+        })
+    };
+
     html! {
         <BrowserRouter>
-            <div class="top-bar">
-                <div class="page-links">
-                    <Link<Route> to={Route::Home}>{ "Home" }</Link<Route>>
-                    <Link<Route> to={Route::SortingAlgorithms}>{ "Sorting" }</Link<Route>>
-                    <Link<Route> to={Route::PathfindingAlgorithms}>{ "Pathfinding" }</Link<Route>>
+            <ContextProvider<ColorScheme> context={color_scheme}>
+                <div class="top-bar">
+                    <div class="page-links">
+                        <Link<Route> to={Route::Home}>{ "Home" }</Link<Route>>
+                        <Link<Route> to={Route::SortingAlgorithms}>{ "Sorting" }</Link<Route>>
+                        <Link<Route> to={Route::PathfindingAlgorithms}>{ "Pathfinding" }</Link<Route>>
+                    </div>
+                    <div class="other-links">
+                        <button onclick={toggle_theme}>{
+                            match color_scheme {
+                                ColorScheme::Light => "☀️",
+                                ColorScheme::Dark => "🌙"
+                            }
+                        }</button>
+                        <a href="https://github.com/Jondolf/rust-algorithms" target="_blank" aria-label="Link to this website's GitHub repository (opens in a new window)">
+                            <img
+                                src={
+                                    match color_scheme {
+                                        ColorScheme::Light => "/assets/images/GitHub-Mark-64px.png",
+                                        ColorScheme::Dark => "/assets/images/GitHub-Mark-Light-64px.png",
+                                    }
+                                }
+                                alt="GitHub logo"
+                                width="40"
+                                height="40"
+                            />
+                        </a>
+                    </div>
                 </div>
-                <div class="other-links">
-                    <a href="https://github.com/Jondolf/rust-algorithms" target="_blank" aria-label="Link to this website's GitHub repository (opens in a new window)">
-                        <img src="/assets/images/GitHub-Mark-Light-64px.png" alt="GitHub logo" width="40" height="40" />
-                    </a>
-                </div>
-            </div>
-            <Switch<Route> render={Switch::render(switch)} />
+                <Switch<Route> render={Switch::render(switch)} />
+            </ContextProvider<ColorScheme>>
         </BrowserRouter>
     }
 }

@@ -8,6 +8,7 @@ yew = "0.19.3"
 yew-router = "0.16.0"
 yew-hooks = "0.1.40"
 gloo-events = "0.1.1"
+gloo-storage = "0.2.1"
 wasm-bindgen = "0.2.79"
 wasm-logger = "0.2.0"
 instant = "0.1.12"
@@ -16,6 +17,7 @@ num-integer = "0.1.44"
 log = "0.4.14"
 rand = "0.8.4"
 regex = "1.5.4"
+serde = "1.0.139"
 reqwest = "0.11.9"
 pulldown-cmark = { version = "0.9.1", default-features = false }
 getrandom = { version = "0.2.3", features = ["js"] }
@@ -29,6 +31,7 @@ path = "./src/pathfinding"
 [dependencies.web-sys]
 version = "0.3.56"
 features = [
+  "Document",
   "HtmlCanvasElement",
   "CanvasRenderingContext2d",
   "AudioContext",

@@ -11,6 +11,7 @@
     <meta name="theme-color" content="#adff2d" />
 
     <!-- Fonts -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -19,15 +20,19 @@
     />
 
     <!-- Trunk -->
+
     <link data-trunk rel="copy-file" href="/robots.txt" />
+    <link data-trunk rel="copy-file" href="/assets/images/GitHub-Mark-64px.png" />
     <link data-trunk rel="copy-file" href="/assets/images/GitHub-Mark-Light-64px.png" />
     <link data-trunk rel="copy-file" href="/manifest.json" />
     <link data-trunk rel="copy-file" href="/service-worker.js" />
     <link data-trunk rel="copy-dir" href="/assets" />
+    <!-- Styles -->
     <link data-trunk rel="copy-dir" href="src/sorting_algorithms/src/" />
-    <link data-trunk rel="sass" href="src/styles/global.scss" as="style" />
+    <link data-trunk rel="sass" href="src/styles/main.scss" as="style" />
 
     <!-- Manifest and icons -->
+
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/ico-icon" href="/assets/images/icons/favicon.ico" />
     <link rel="apple-touch-icon" href="/assets/images/icons/icon-192x192.png" />
@@ -41,6 +46,24 @@
           navigator.serviceWorker.register('/service-worker.js');
         }
       };
+
+      // Now we store the user's preferred color scheme in localStorage.
+      // Note that this only stores the preferred color scheme so that it can be accessed on the Rust side (web-sys doesn't seem to have window.matchMedia).
+      // The actual theme can be overwritten by the 'app-color-scheme-mode' stored in localStorage. If it is set to 'auto', the preferred color scheme is used.
+
+      const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+      if (darkModeMediaQuery.matches) {
+        localStorage.setItem('preferred-color-scheme', '"Dark"');
+      } else {
+        localStorage.setItem('preferred-color-scheme', '"Light"');
+      }
+
+      // Subscribe to preferred color scheme changes
+      darkModeMediaQuery.addEventListener('change', (e) => {
+        const prefersDark = e.matches;
+        localStorage.setItem('preferred-color-scheme', prefersDark ? '"Dark"' : '"Light"');
+      });
     </script>
 
     <title>Algorithms</title>
@@ -54,27 +77,19 @@
       }
 
       html {
-        --color-accent-1-hsl: 80, 100%, 60%;
-        --color-accent-1: hsl(var(--color-accent-1-hsl));
-        --color-accent-2-hsl: 150, 100%, 60%;
-        --color-accent-2: hsl(var(--color-accent-2-hsl));
-        --color-accent-3-hsl: 190, 100%, 60%;
-        --color-accent-3: hsl(var(--color-accent-3-hsl));
-        --bg-color-1: hsl(200, 10%, 15%);
-        --bg-color-2: hsl(200, 15%, 10%);
         --top-bar-height: 4rem;
       }
 
       body {
         background-color: var(--bg-color-1);
-        color: white;
+        color: var(--text-color);
         box-sizing: border-box;
         font-family: 'Roboto Mono', Consolas, monospace;
       }
 
       ::selection {
         background-color: hsla(var(--color-accent-3-hsl), 50%);
-        color: white;
+        color: var(--text-color);
       }
     </style>
   </head>

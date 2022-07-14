@@ -10,11 +10,15 @@ use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 use yew::prelude::*;
 use yew_hooks::use_size;
 
+use crate::hooks::use_color_scheme::ColorScheme;
+
 #[wasm_bindgen]
 extern "C" {
     fn setTimeout(closure: &Closure<dyn FnMut()>, time: u32) -> i32;
     fn clearTimeout(timeout_id: i32);
 }
+
+const UPDATE_RATE: Duration = Duration::from_millis(50);
 
 #[derive(Properties, PartialEq)]
 pub struct SortGraphProps {
@@ -26,11 +30,11 @@ pub struct SortGraphProps {
 pub struct SortGraphConfig {
     color_changed: String,
     color_unchanged: String,
-    update_rate: Duration,
 }
 
 #[function_component(SortGraph)]
 pub fn sort_graph(props: &SortGraphProps) -> Html {
+    let app_color_scheme = use_context::<ColorScheme>().expect("no color scheme context found");
     let canvas_ref = use_node_ref();
     let canvas_container_ref = use_node_ref();
     let canvas_container_size = use_size(canvas_container_ref.clone());
@@ -41,10 +45,15 @@ pub fn sort_graph(props: &SortGraphProps) -> Html {
     let _render_timeout_closure: UseStateHandle<Option<Closure<dyn FnMut()>>> = use_state(|| None);
 
     let prev_draw = use_state_eq(Instant::now);
-    let config = SortGraphConfig {
-        color_changed: "#00aaff".to_string(),
-        color_unchanged: "#adff2f".to_string(),
-        update_rate: Duration::from_millis(50),
+    let graph_color_scheme = match app_color_scheme {
+        ColorScheme::Light => SortGraphConfig {
+            color_changed: "#059ada".to_string(),
+            color_unchanged: "#7abc05".to_string(),
+        },
+        ColorScheme::Dark => SortGraphConfig {
+            color_changed: "#00aaff".to_string(),
+            color_unchanged: "#adff2f".to_string(),
+        },
     };
 
     let draw_bars = {
@@ -73,7 +82,6 @@ pub fn sort_graph(props: &SortGraphProps) -> Html {
         let step = props.step.clone();
         let canvas = canvas.clone();
         let ctx = ctx.clone();
-        let config = config.clone();
 
         move || {
             if let Some(canvas) = canvas.as_ref() as Option<&HtmlCanvasElement> {
@@ -102,10 +110,10 @@ pub fn sort_graph(props: &SortGraphProps) -> Html {
                     ctx.clear_rect(0.0, 0.0, canvas_width, canvas_height);
                     ctx.set_line_width(width - margin);
 
-                    set_stroke_style(ctx, config.color_unchanged);
+                    set_stroke_style(ctx, graph_color_scheme.color_unchanged);
                     draw_bars(&unchanged_indices, max_val, width, canvas_height);
 
-                    set_stroke_style(ctx, config.color_changed);
+                    set_stroke_style(ctx, graph_color_scheme.color_changed);
                     draw_bars(
                         &step
                             .iter()
@@ -148,7 +156,7 @@ pub fn sort_graph(props: &SortGraphProps) -> Html {
         use_effect_with_deps(
             move |_| {
                 // Limit rate of redraws
-                if prev_draw.elapsed() > config.update_rate {
+                if prev_draw.elapsed() > UPDATE_RATE {
                     draw.clone()();
                     prev_draw.set(Instant::now());
                 } else {
@@ -160,7 +168,7 @@ pub fn sort_graph(props: &SortGraphProps) -> Html {
                         draw.clone()();
                     }) as Box<dyn FnMut()>);
 
-                    let timeout_id = setTimeout(&cb, config.update_rate.as_millis() as u32);
+                    let timeout_id = setTimeout(&cb, UPDATE_RATE.as_millis() as u32);
 
                     render_timeout_id.set(Some(timeout_id));
                     _render_timeout_closure.set(Some(cb));
@@ -176,7 +184,7 @@ pub fn sort_graph(props: &SortGraphProps) -> Html {
             draw.clone()();
             || ()
         },
-        canvas_container_size,
+        (canvas_container_size, app_color_scheme),
     );
 
     html! {

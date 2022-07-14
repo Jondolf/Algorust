@@ -149,10 +149,10 @@ fn playback_button(onclick: Callback<MouseEvent>, playing: bool) -> Html {
                             <g id="pause">
                                 <path
                                     d="M455 15H340.742C324.173 15 310.742 28.4314 310.742 45V555C310.742 571.569 324.173 585 340.742 585H455C471.569 585 485 571.569 485 555V45C485 28.4315 471.569 15 455 15Z"
-                                    fill="white" stroke="white" stroke-width="30" stroke-linejoin="round" />
+                                    fill="var(--text-color)" stroke="var(--text-color)" stroke-width="30" stroke-linejoin="round" />
                                 <path
                                     d="M159.258 15H45C28.4315 15 15 28.4314 15 45V555C15 571.569 28.4315 585 45 585H159.258C175.827 585 189.258 571.569 189.258 555V45C189.258 28.4315 175.827 15 159.258 15Z"
-                                    fill="white" stroke="white" stroke-width="30" stroke-linejoin="round" />
+                                    fill="var(--text-color)" stroke="var(--text-color)" stroke-width="30" stroke-linejoin="round" />
                             </g>
                         </svg>
 
@@ -160,7 +160,7 @@ fn playback_button(onclick: Callback<MouseEvent>, playing: bool) -> Html {
                 } else {
                     html! {
                         <svg width="502" height="586" viewBox="0 0 502 586" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path id="play" d="M472.125 267.275L60.4349 20.2609C40.4391 8.26348 15 22.6669 15 45.9857V540.014C15 563.333 40.4391 577.737 60.4348 565.739L472.125 318.725C491.546 307.073 491.546 278.927 472.125 267.275Z" fill="white" stroke="white" stroke-width="30" stroke-linejoin="round"/>
+                            <path id="play" d="M472.125 267.275L60.4349 20.2609C40.4391 8.26348 15 22.6669 15 45.9857V540.014C15 563.333 40.4391 577.737 60.4348 565.739L472.125 318.725C491.546 307.073 491.546 278.927 472.125 267.275Z" fill="var(--text-color)" stroke="var(--text-color)" stroke-width="30" stroke-linejoin="round"/>
                         </svg>
                     }
                 }

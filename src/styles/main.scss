@@ -1,9 +1,15 @@
+@use './themes.scss';
+
 @use './home.scss';
 @use './sorting-algorithms.scss';
 @use './pathfinding.scss';
 
 $sidebar-resize-handle-thickness: 4px;
 $input-border-radius: 0.25rem;
+
+:root {
+  color-scheme: light dark;
+}
 
 ::-webkit-scrollbar {
   background: transparent;
@@ -27,10 +33,10 @@ $input-border-radius: 0.25rem;
   .page-links {
     display: flex;
     align-items: center;
+    gap: 1.5rem;
 
     a {
-      margin-right: 1.5rem;
-      color: white;
+      color: var(--text-color);
       text-decoration: none;
       transition: color 150ms ease;
 
@@ -42,6 +48,20 @@ $input-border-radius: 0.25rem;
 
   .other-links {
     height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+
+    button {
+      background: transparent;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 40px;
+      height: 40px;
+      font-size: 1.5em;
+      cursor: pointer;
+    }
   }
 }
 
@@ -59,12 +79,12 @@ $input-border-radius: 0.25rem;
     height: 100%;
     overflow: auto;
     background-color: var(--bg-color-2);
-    color: white;
+    color: var(--text-color);
     box-sizing: border-box;
     white-space: nowrap;
 
     h2 {
-      color: white;
+      color: var(--text-color);
     }
 
     .sidebar-content {
@@ -257,7 +277,7 @@ select {
   button,
   input,
   select {
-    color: white;
+    color: var(--text-color);
     font-family: 'Roboto Mono', Consolas, monospace;
   }
 
@@ -270,7 +290,7 @@ select {
     border: 2px solid #bbb;
     border-radius: $input-border-radius;
     outline: none;
-    background-color: hsl(200, 15%, 15%);
+    background-color: var(--bg-color-1);
     box-sizing: border-box;
     font-size: 0.9em;
     transition: border 250ms ease;
@@ -289,7 +309,6 @@ select {
     right: 0.5rem;
     font-size: 0.75em;
     color: var(--color-accent-1);
-    opacity: 0.75;
     cursor: default;
     user-select: none;
     overflow: hidden;
@@ -305,7 +324,7 @@ select {
     border: 2px solid #bbb;
     border-radius: $input-border-radius;
     outline: none;
-    background-color: hsl(200, 15%, 15%);
+    background-color: var(--bg-color-1);
     box-sizing: border-box;
     font-size: 0.9em;
     transition: border 250ms ease;
