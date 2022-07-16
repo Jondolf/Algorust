@@ -39,7 +39,7 @@ fn merge<T: Copy + Clone + PartialOrd>(
             i += 1;
         } else {
             merged.push(b[j]);
-            steps.push(vec![SortCommand::Set(start_i + merged.len() - 1, b[j])]); //1,0
+            steps.push(vec![SortCommand::Set(start_i + merged.len() - 1, b[j])]);
             j += 1;
         }
     }
