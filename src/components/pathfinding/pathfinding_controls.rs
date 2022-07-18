@@ -61,7 +61,8 @@ pub fn pathfinding_controls<E: 'static + Edge>(props: &PathfindingControlsProps<
         let config = config.clone();
 
         Callback::from(move |_| {
-            config.borrow_mut().move_diagonally = !config.borrow().move_diagonally;
+            let move_diagonally = config.borrow().move_diagonally;
+            config.borrow_mut().move_diagonally = !move_diagonally;
             on_update_config.emit(());
         })
     };
