@@ -66,9 +66,6 @@ pub fn path_grid(props: &PathGridProps) -> Html {
     };
     let (start, end) = (props.start, props.end);
 
-    let canvas_container_ref = use_node_ref();
-    let canvas_container_size = use_size(canvas_container_ref.clone());
-
     let background_canvas_ref = use_node_ref();
     let background_canvas_size = use_size(background_canvas_ref.clone());
     let background_canvas: UseStateHandle<Option<HtmlCanvasElement>> = use_state(|| None);
@@ -345,15 +342,11 @@ pub fn path_grid(props: &PathGridProps) -> Html {
     };
 
     html! {
-        <div
-            ref={canvas_container_ref}
-            class="path-grid"
-            style={format!("aspect-ratio: {}/{}", width, height)}
-        >
+        <div class="path-grid" style={format!("aspect-ratio: {}/{}", width, height)}>
             // Background (visited cells etc.)
             <canvas
                 ref={background_canvas_ref}
-                style={format!("z-index: 1; aspect-ratio: {} / {}; max-width: {}px; max-height: {}px", width, height, canvas_container_size.0, canvas_container_size.1)}
+                style={format!("z-index: 1; aspect-ratio: {} / {};", width, height)}
                 width={background_canvas_size.0.to_string()}
                 height={background_canvas_size.1.to_string()}
             >
