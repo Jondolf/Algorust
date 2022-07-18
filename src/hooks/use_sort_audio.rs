@@ -1,11 +1,11 @@
 use std::rc::Rc;
 
 use crate::{
-    components::sorting_algorithms::audio_controls::AudioConfig,
+    components::sorting::audio_controls::AudioConfig,
     utils::audio::{Note, Synth},
 };
 
-use sorting_algorithms::SortCommand;
+use sorting::SortCommand;
 use yew::prelude::*;
 
 pub fn use_sort_audio(

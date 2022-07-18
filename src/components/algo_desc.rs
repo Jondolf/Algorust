@@ -1,18 +1,48 @@
 use crate::{components::raw_html::RawHtml, utils::fetch};
 
 use pulldown_cmark::{html, Options, Parser};
+use web_sys::window;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_mount};
 
 #[derive(Clone, Properties, PartialEq)]
-pub struct SortDescProps {
-    pub url: String,
+pub struct AlgoDescProps {
+    pub algorithm: String,
 }
 
-#[function_component(SortDesc)]
-pub fn sort_desc(props: &SortDescProps) -> Html {
-    let url = props.url.to_string();
-    let md = use_async(async move { fetch(url, "text/markdown").await });
+#[function_component(AlgoDesc)]
+pub fn algo_desc(props: &AlgoDescProps) -> Html {
+    let url = use_state(String::new);
+
+    {
+        let url = url.clone();
+        use_effect_with_deps(
+            move |algorithm| {
+                let location = window().unwrap().location();
+                let origin = location.origin().unwrap();
+                let pathname = location.pathname().unwrap();
+                // sorting or pathfinding etc.
+                let algorithm_type = pathname.split('/').collect::<Vec<&str>>()[1];
+
+                url.set(format!(
+                    "{}/{}_algorithms/{}/README.md",
+                    origin,
+                    algorithm_type,
+                    algorithm
+                        .to_lowercase()
+                        .replace(' ', "_")
+                        .replace('*', "_star")
+                ));
+                || ()
+            },
+            props.algorithm.clone(),
+        );
+    }
+
+    let md = {
+        let url = (*url).clone();
+        use_async(async move { fetch(url, "text/markdown").await })
+    };
 
     {
         let md = md.clone();
@@ -21,7 +51,7 @@ pub fn sort_desc(props: &SortDescProps) -> Html {
 
     {
         let md = md.clone();
-        use_effect_with_deps(move |_| || md.run(), props.url.to_string());
+        use_effect_with_deps(move |_| || md.run(), url);
     }
 
     html! {

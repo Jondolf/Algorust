@@ -1,15 +1,16 @@
 use crate::components::{
+    algo_desc::AlgoDesc,
     collapsible::Collapsible,
     pathfinding::{toolbar::*, *},
     sidebar::Sidebar,
     step_slider::StepSlider,
 };
 use pathfinding::{
-    algorithms, generate_graph,
+    generate_graph,
     graph::AdjacencyList,
     maze_generation::{recursive_division, MazeGenerationResult, MazeGenerationStep},
-    run_pathfinding, Coord, Edge, PathfindingResult, PathfindingStep, PathfindingSteps, Vertex,
-    VertexState,
+    pathfinding_algorithms, run_pathfinding, Coord, Edge, PathfindingResult, PathfindingStep,
+    PathfindingSteps, Vertex, VertexState,
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -52,7 +53,7 @@ impl<E: Edge> Default for PathfindingAlgorithm<Coord, E> {
     fn default() -> Self {
         Self {
             name: String::from("Dijkstra"),
-            find_path: algorithms::dijkstra::<Coord, E>,
+            find_path: pathfinding_algorithms::dijkstra::<Coord, E>,
         }
     }
 }
@@ -63,15 +64,15 @@ pub fn get_pathfinding_algorithms<V: Vertex, E: Edge>(
     BTreeMap::from([
         (
             "a*",
-            PathfindingAlgorithm::new("A*", algorithms::a_star::<V, E>),
+            PathfindingAlgorithm::new("A*", pathfinding_algorithms::a_star::<V, E>),
         ),
         (
             "dijkstra",
-            PathfindingAlgorithm::new("Dijkstra", algorithms::dijkstra::<V, E>),
+            PathfindingAlgorithm::new("Dijkstra", pathfinding_algorithms::dijkstra::<V, E>),
         ),
         (
             "dfs",
-            PathfindingAlgorithm::new("DFS", algorithms::dfs::<V, E>),
+            PathfindingAlgorithm::new("DFS", pathfinding_algorithms::dfs::<V, E>),
         ),
     ])
 }
@@ -504,6 +505,8 @@ pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
                         }
                     }
                 </div>
+
+                <AlgoDesc algorithm={config.borrow().algorithm.name.clone()} />
             </main>
         </div>
     }

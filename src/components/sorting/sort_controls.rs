@@ -3,7 +3,7 @@ use yew_router::{history::History, hooks::use_history};
 
 use crate::{
     components::input_items::*,
-    pages::sorting_algorithms::{get_sorting_algorithms, SortConfig, SortingAlgorithmsRoute},
+    pages::sorting::{get_sorting_algorithms, SortConfig, SortingRoute},
     utils::{gen_u32_vec, knuth_shuffle},
 };
 
@@ -68,7 +68,7 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
         })
     };
     let change_algorithm = Callback::from(move |algorithm: String| {
-        history.push(SortingAlgorithmsRoute::SortingAlgorithm {
+        history.push(SortingRoute::SortingAlgorithm {
             algorithm: algorithm.replace(' ', "-").to_lowercase(),
         });
     });

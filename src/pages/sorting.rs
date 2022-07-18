@@ -1,11 +1,11 @@
 use crate::{
     components::{
+        algo_desc::AlgoDesc,
         collapsible::Collapsible,
         sidebar::Sidebar,
-        sorting_algorithms::{
+        sorting::{
             audio_controls::{AudioConfig, AudioControls},
             sort_controls::SortControls,
-            sort_desc::SortDesc,
             sort_graph::SortGraph,
         },
         step_slider::StepSlider,
@@ -13,9 +13,8 @@ use crate::{
     hooks::use_sort_audio::use_sort_audio,
     utils::{gen_u32_vec, knuth_shuffle},
 };
-use sorting_algorithms::*;
+use sorting::*;
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
-use web_sys::window;
 use yew::prelude::*;
 use yew_hooks::use_title;
 use yew_router::prelude::*;
@@ -82,26 +81,26 @@ pub fn get_sorting_algorithms() -> BTreeMap<&'static str, SortingAlgorithm> {
 }
 
 #[derive(Clone, Debug, Routable, PartialEq)]
-pub enum SortingAlgorithmsRoute {
-    #[at("/sorting-algorithms")]
-    SortingAlgorithms,
-    #[at("/sorting-algorithms/:algorithm")]
+pub enum SortingRoute {
+    #[at("/sorting")]
+    Sorting,
+    #[at("/sorting/:algorithm")]
     SortingAlgorithm { algorithm: String },
 }
 
-pub fn switch_sorting_algorithms(route: &SortingAlgorithmsRoute) -> Html {
+pub fn switch_sorting(route: &SortingRoute) -> Html {
     match route {
-        SortingAlgorithmsRoute::SortingAlgorithms => html! {
-            <Redirect<SortingAlgorithmsRoute> to={SortingAlgorithmsRoute::SortingAlgorithm { algorithm: "bubble-sort".to_string()} } />
+        SortingRoute::Sorting => html! {
+            <Redirect<SortingRoute> to={SortingRoute::SortingAlgorithm { algorithm: "bubble-sort".to_string()} } />
         },
-        SortingAlgorithmsRoute::SortingAlgorithm { algorithm } => {
+        SortingRoute::SortingAlgorithm { algorithm } => {
             if get_sorting_algorithms().contains_key(algorithm.as_str()) {
                 html! {
                     <SortingAlgorithmsPage algorithm={algorithm.to_string()} />
                 }
             } else {
                 html! {
-                    <SortingAlgorithms404Page algorithm={algorithm.to_string()} />
+                    <Sorting404Page algorithm={algorithm.to_string()} />
                 }
             }
         }
@@ -183,7 +182,7 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
         )
     });
 
-    let route = use_route::<SortingAlgorithmsRoute>();
+    let route = use_route::<SortingRoute>();
 
     let update_values = {
         let input = input.clone();
@@ -266,7 +265,7 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
         use_effect_with_deps(
             move |route| {
                 let algorithm_name = match route.as_ref().unwrap() {
-                    SortingAlgorithmsRoute::SortingAlgorithm { algorithm } => algorithm,
+                    SortingRoute::SortingAlgorithm { algorithm } => algorithm,
                     _ => "bubble-sort",
                 };
                 if let Some(algorithm) = get_sorting_algorithms().get(algorithm_name) {
@@ -346,7 +345,7 @@ pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
                     </span>
                 </div>
 
-                <SortDesc url={get_sort_desc_url(&config.sorting_algorithm.name)} />
+                <AlgoDesc algorithm={config.sorting_algorithm.name.clone()} />
             </main>
         </div>
     }
@@ -363,31 +362,22 @@ fn get_output_at_step_index(
     output
 }
 
-fn get_sort_desc_url(algorithm_name: &str) -> String {
-    let origin = window().unwrap().location().origin().unwrap();
-    format!(
-        "{}/src/{}/README.md",
-        origin,
-        algorithm_name.to_lowercase().replace(' ', "_")
-    )
-}
-
 #[derive(Clone, PartialEq, Properties)]
-struct SortingAlgorithms404PageProps {
+struct Sorting404PageProps {
     algorithm: String,
 }
 
-#[function_component(SortingAlgorithms404Page)]
-fn sorting_algorithms_404_page(props: &SortingAlgorithms404PageProps) -> Html {
-    use_title("404 - Sorting algorithms".to_string());
+#[function_component(Sorting404Page)]
+fn sorting_404_page(props: &Sorting404PageProps) -> Html {
+    use_title("404 - Sorting".to_string());
 
     html! {
         <>
             <h1>{ "404" }</h1>
             <p>{ format!("The algorithm \"{}\" was not found.", props.algorithm) }</p>
-            <Link<SortingAlgorithmsRoute> to={SortingAlgorithmsRoute::SortingAlgorithms}>
-                { "Back to sorting algorithms" }
-            </Link<SortingAlgorithmsRoute>>
+            <Link<SortingRoute> to={SortingRoute::Sorting}>
+                { "Back to sorting" }
+            </Link<SortingRoute>>
         </>
     }
 }

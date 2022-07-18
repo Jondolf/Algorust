@@ -1,4 +1,4 @@
-use sorting_algorithms::SortCommand;
+use sorting::SortCommand;
 
 // std::time isn't supported on WASM platforms
 use instant::{Duration, Instant};

@@ -22,8 +22,8 @@ reqwest = "0.11.9"
 pulldown-cmark = { version = "0.9.1", default-features = false }
 getrandom = { version = "0.2.3", features = ["js"] }
 
-[dependencies.sorting_algorithms]
-path = "./src/sorting_algorithms"
+[dependencies.sorting]
+path = "./src/sorting"
 
 [dependencies.pathfinding]
 path = "./src/pathfinding"

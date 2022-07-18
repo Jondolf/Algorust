@@ -1,5 +1,5 @@
 extern crate pathfinding;
-extern crate sorting_algorithms;
+extern crate sorting;
 
 mod components;
 mod hooks;
@@ -17,13 +17,13 @@ use yew_router::prelude::*;
 enum Route {
     #[at("/")]
     Home,
-    #[at("/sorting-algorithms")]
-    SortingAlgorithms,
-    // Without this, subroutes don't seem to be recognized even though they are defined in pages::sorting_algorithms
-    #[at("/sorting-algorithms/:algorithm")]
+    #[at("/sorting")]
+    Sorting,
+    // Without this, subroutes don't seem to be recognized even though they are defined in pages::sorting
+    #[at("/sorting/:algorithm")]
     SortingAlgorithm,
     #[at("/pathfinding")]
-    PathfindingAlgorithms,
+    Pathfinding,
     #[at("/pathfinding/:algorithm")]
     PathfindingAlgorithm,
 }
@@ -33,13 +33,13 @@ fn switch(routes: &Route) -> Html {
         Route::Home => html! {
             <pages::home::HomePage />
         },
-        Route::SortingAlgorithms => html! {
-            <Switch<pages::sorting_algorithms::SortingAlgorithmsRoute> render={Switch::render(pages::sorting_algorithms::switch_sorting_algorithms)} />
+        Route::Sorting => html! {
+            <Switch<pages::sorting::SortingRoute> render={Switch::render(pages::sorting::switch_sorting)} />
         },
         Route::SortingAlgorithm => html! {
-            <Switch<pages::sorting_algorithms::SortingAlgorithmsRoute> render={Switch::render(pages::sorting_algorithms::switch_sorting_algorithms)} />
+            <Switch<pages::sorting::SortingRoute> render={Switch::render(pages::sorting::switch_sorting)} />
         },
-        Route::PathfindingAlgorithms => html! {
+        Route::Pathfinding => html! {
             <Switch<pages::pathfinding::PathfindingRoute> render={Switch::render(pages::pathfinding::switch_pathfinding)} />
         },
         Route::PathfindingAlgorithm => html! {
@@ -96,8 +96,8 @@ fn app() -> Html {
                 <div class="top-bar">
                     <div class="page-links">
                         <Link<Route> to={Route::Home}>{ "Home" }</Link<Route>>
-                        <Link<Route> to={Route::SortingAlgorithms}>{ "Sorting" }</Link<Route>>
-                        <Link<Route> to={Route::PathfindingAlgorithms}>{ "Pathfinding" }</Link<Route>>
+                        <Link<Route> to={Route::Sorting}>{ "Sorting" }</Link<Route>>
+                        <Link<Route> to={Route::Pathfinding}>{ "Pathfinding" }</Link<Route>>
                     </div>
                     <div class="other-links">
                         <button onclick={toggle_theme}>{

@@ -1,8 +1,8 @@
 //! This crate contains my implementations of pathfinding utilities and algorithms.
 //! I made them for my algorithm visualization website, so they most likely won't be suited for other projects.
-pub mod algorithms;
 pub mod graph;
 pub mod maze_generation;
+pub mod pathfinding_algorithms;
 
 use core::fmt;
 use graph::*;

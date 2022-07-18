@@ -28,7 +28,7 @@ dependencies = [
  "regex",
  "reqwest",
  "serde",
- "sorting_algorithms",
+ "sorting",
  "wasm-bindgen",
  "wasm-logger",
  "web-sys",
@@ -948,7 +948,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sorting_algorithms"
+name = "sorting"
 version = "0.1.0"
 dependencies = [
  "instant",
