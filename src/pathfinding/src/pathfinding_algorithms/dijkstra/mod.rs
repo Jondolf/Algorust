@@ -102,7 +102,7 @@ fn distance_map_shortest_path<V: Vertex, E: Edge>(
             let unvisited_neighbors = neighbors.iter().filter(|n| !shortest_path.contains(n.0));
             let closest_neighbor = unvisited_neighbors
                 .map(|n| distances.get_key_value(n.0).unwrap_or(default_val))
-                .min_by(|a, b| a.1.cmp(b.1));
+                .min_by(|a, b| a.1.partial_cmp(b.1).unwrap());
 
             if let Some((new_vertex, _)) = closest_neighbor {
                 shortest_path.push(*new_vertex);

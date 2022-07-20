@@ -6,7 +6,7 @@ pub mod pathfinding_algorithms;
 
 use core::fmt;
 use graph::*;
-use num_traits::PrimInt;
+use num_traits::Float;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::{Debug, Display},
@@ -17,14 +17,14 @@ use std::{
 /// A trait for structs that can calculate the distance from a to b.
 pub trait Distance {
     /// Get the distance from a to b.
-    fn distance<T: PrimInt>(&self, from: Self) -> T;
+    fn distance<T: Float>(&self, from: Self) -> T;
 }
 
 pub trait Line<T: Distance> {
     fn new(from: T, to: T) -> Self;
     // Approximate the points of a straight line between two points.
     fn get_points(&self) -> Vec<T>;
-    fn len(&self) -> usize;
+    fn len<N: Float>(&self) -> N;
 }
 
 pub struct Rect {
@@ -74,7 +74,7 @@ impl Line<Coord> for Line2D {
             }
         }
     }
-    fn len(&self) -> usize {
+    fn len<N: Float>(&self) -> N {
         self.from.distance(self.to)
     }
 }
@@ -126,17 +126,9 @@ impl Line2D {
 }
 
 pub trait Vertex: Distance + Copy + Debug + Display + Ord + Hash {}
-pub trait Edge: PrimInt {}
-impl Edge for u8 {}
-impl Edge for u16 {}
-impl Edge for u32 {}
-impl Edge for u64 {}
-impl Edge for usize {}
-impl Edge for i8 {}
-impl Edge for i16 {}
-impl Edge for i32 {}
-impl Edge for i64 {}
-impl Edge for isize {}
+pub trait Edge: Float {}
+impl Edge for f32 {}
+impl Edge for f64 {}
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Coord {
@@ -187,10 +179,10 @@ impl Add for Coord {
 }
 impl Vertex for Coord {}
 impl Distance for Coord {
-    fn distance<T: PrimInt>(&self, from: Self) -> T {
-        let x_diff = (from.x - self.x).abs();
-        let y_diff = (from.y - self.y).abs();
-        T::from(x_diff.max(y_diff)).unwrap()
+    fn distance<T: Float>(&self, from: Self) -> T {
+        let x_diff = (from.x - self.x);
+        let y_diff = (from.y - self.y);
+        T::from((x_diff.pow(2) as f32 + y_diff.pow(2) as f32).sqrt()).unwrap()
     }
 }
 
@@ -320,8 +312,8 @@ pub fn generate_graph<E: Edge>(
                         // Horizontal or vertical costs 1
                         neighbors.insert(coord, E::from(1).unwrap());
                     } else {
-                        // Diagonal costs 2 to reduce "zigzags"
-                        neighbors.insert(coord, E::from(2).unwrap());
+                        // Diagonal costs sqrt(2)
+                        neighbors.insert(coord, E::from(2.0_f32.sqrt()).unwrap());
                     }
                 }
             }

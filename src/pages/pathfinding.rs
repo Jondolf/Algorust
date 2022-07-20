@@ -21,7 +21,7 @@ use yew::prelude::*;
 use yew_hooks::use_title;
 use yew_router::prelude::*;
 
-pub type EdgeType = isize;
+pub type EdgeType = f32;
 
 type PathfindingFunc<V, E> =
     fn(AdjacencyList<V, E>, V, V, PathfindingSteps<V>) -> PathfindingResult<V, E>;
