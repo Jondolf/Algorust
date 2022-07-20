@@ -180,8 +180,8 @@ impl Add for Coord {
 impl Vertex for Coord {}
 impl Distance for Coord {
     fn distance<T: Float>(&self, from: Self) -> T {
-        let x_diff = (from.x - self.x);
-        let y_diff = (from.y - self.y);
+        let x_diff = from.x - self.x;
+        let y_diff = from.y - self.y;
         T::from((x_diff.pow(2) as f32 + y_diff.pow(2) as f32).sqrt()).unwrap()
     }
 }
