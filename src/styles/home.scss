@@ -25,6 +25,42 @@
       padding: 0 1.5em;
       box-sizing: border-box;
     }
+
+    .buttons {
+      display: flex;
+      margin-top: 1rem;
+      gap: 1rem;
+
+      a {
+        text-decoration: none;
+      }
+
+      button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1ch;
+        padding: 0.8rem;
+        font-size: 1em;
+        font-family: 'Roboto Mono', Consolas, monospace;
+        border-radius: 0.5rem;
+        outline: 2px solid var(--bg-color-1);
+        cursor: pointer;
+        box-sizing: border-box;
+
+        &.sorting-button {
+          background: hsla(var(--color-accent-2-hsl), 0.5);
+        }
+
+        &.github-button {
+          background: black;
+        }
+
+        &:hover {
+          font-weight: bold;
+        }
+      }
+    }
   }
 
   section {
