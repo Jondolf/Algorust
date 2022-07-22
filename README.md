@@ -1,6 +1,6 @@
-# Rust algorithms
+# [Algorust](https://algorust.com)
 
-This is a website with interactive visualizations of various sorting algorithms. The entire project is made in Rust, with a [Yew](https://yew.rs) frontend. This was created mainly for learning purposes, but I may eventually publish it as a proper website.
+This is a website with interactive visualizations of various algorithms. The entire project is made in Rust, with a [Yew](https://yew.rs) frontend.
 
 ## Implemented algorithms
 
