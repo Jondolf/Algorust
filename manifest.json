@@ -1,6 +1,6 @@
 {
-  "name": "Algorithms website",
-  "short_name": "Algorithms",
+  "name": "Algorust",
+  "short_name": "Algorust",
   "description": "A Rust-based website with interactive implementations of various algorithms.",
   "theme_color": "#adff2d",
   "background_color": "#22282a",

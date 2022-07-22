@@ -8,7 +8,7 @@ pub fn home_page() -> Html {
     html! {
         <div id="home">
             <header>
-                <h1>{ "Rust Algorithms" }</h1>
+                <h1>{ "Algorust" }</h1>
 
                 <p>{ "Visualize various types of algorithms in a responsive, interactive and configurable way. Everything is made with Rust 🦀" }</p>
 
