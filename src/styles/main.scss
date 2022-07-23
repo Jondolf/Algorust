@@ -430,9 +430,12 @@ details {
   }
 }
 
-pre {
-  width: 100%;
-  white-space: normal;
+code {
+  background-color: var(--bg-color-2);
+  font-family: 'Roboto Mono', Consolas, monospace;
+  color: var(--text-color);
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.5rem;
 }
 
 table {
