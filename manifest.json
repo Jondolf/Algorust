@@ -2,7 +2,7 @@
   "name": "Algorust",
   "short_name": "Algorust",
   "description": "A Rust-based website with interactive implementations of various algorithms.",
-  "theme_color": "#adff2d",
+  "theme_color": "#161b1d",
   "background_color": "#22282a",
   "display": "standalone",
   "orientation": "any",

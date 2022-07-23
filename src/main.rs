@@ -8,7 +8,8 @@ mod utils;
 
 use gloo_storage::{LocalStorage, Storage};
 use hooks::use_color_scheme::{use_color_scheme, ColorScheme, ColorSchemeMode};
-use web_sys::window;
+use wasm_bindgen::JsCast;
+use web_sys::{window, HtmlMetaElement};
 use yew::prelude::*;
 use yew_hooks::use_update;
 use yew_router::prelude::*;
@@ -53,15 +54,28 @@ fn app() -> Html {
     let color_scheme = use_color_scheme();
     let update = use_update();
 
+    let set_color_scheme = move |color_scheme: ColorScheme| {
+        let document = window().unwrap().document().unwrap();
+        // Set body class according to color scheme
+        document
+            .body()
+            .unwrap()
+            .set_class_name(&color_scheme.to_string().to_lowercase());
+        // Set PWA theme color
+        if let Ok(meta) = document.query_selector("meta[name=theme-color]") {
+            meta.unwrap()
+                .dyn_into::<HtmlMetaElement>()
+                .unwrap()
+                .set_content(match color_scheme {
+                    ColorScheme::Light => "#d3dbde",
+                    ColorScheme::Dark => "#161b1d",
+                });
+        }
+    };
+
     use_effect_with_deps(
         move |_| {
-            window()
-                .unwrap()
-                .document()
-                .unwrap()
-                .body()
-                .unwrap()
-                .set_class_name(&color_scheme.to_string().to_lowercase());
+            set_color_scheme(color_scheme);
             || ()
         },
         color_scheme,
@@ -79,13 +93,7 @@ fn app() -> Html {
                 ColorSchemeMode::Dark => ColorScheme::Light,
             };
             LocalStorage::set("app-color-scheme-mode", next_color_scheme.to_string()).unwrap();
-            window()
-                .unwrap()
-                .document()
-                .unwrap()
-                .body()
-                .unwrap()
-                .set_class_name(&next_color_scheme.to_string().to_lowercase());
+            set_color_scheme(next_color_scheme);
             update();
         })
     };

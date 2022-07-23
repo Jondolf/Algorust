@@ -33,6 +33,7 @@ version = "0.3.56"
 features = [
   "Document",
   "HtmlCanvasElement",
+  "HtmlMetaElement",
   "CanvasRenderingContext2d",
   "AudioContext",
   "AudioDestinationNode",
