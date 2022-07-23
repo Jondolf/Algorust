@@ -49,11 +49,13 @@
         box-sizing: border-box;
 
         &.sorting-button {
-          background: hsla(var(--color-accent-2-hsl), 0.5);
+          background: hsla(var(--color-accent-2-hsl), 0.3);
+          color: var(--text-color);
         }
 
         &.github-button {
           background: black;
+          color: white;
         }
 
         &:hover {
