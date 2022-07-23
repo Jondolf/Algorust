@@ -1,5 +1,9 @@
 const cacheName = 'algorust';
-const filesToCache = ['/index.html'];
+const filesToCache = [
+  '/index.html',
+  '/assets/images/GitHub-Mark-64px.png',
+  '/assets/images/GitHub-Mark-Light-64px.png',
+];
 
 // Start the service worker and cache all of the app's content
 self.addEventListener('install', function (e) {
