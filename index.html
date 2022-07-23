@@ -10,15 +10,6 @@
     />
     <meta name="theme-color" content="#adff2d" />
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="preload"
-      as="style"
-      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
-    />
-
     <!-- Trunk -->
     <link data-trunk rel="copy-file" href="/robots.txt" />
     <link data-trunk rel="copy-file" href="/assets/images/GitHub-Mark-64px.png" />
@@ -29,6 +20,16 @@
     <link data-trunk rel="copy-dir" href="src/sorting/src/sorting_algorithms/" />
     <link data-trunk rel="copy-dir" href="src/pathfinding/src/pathfinding_algorithms/" />
     <link data-trunk rel="sass" href="src/styles/main.scss" as="style" />
+
+    <!-- Fonts -->
+    <link rel="preload" href="/assets/fonts/RobotoMono-VariableFont_wght.ttf" as="font" type="font/ttf" crossorigin />
+    <link
+      rel="preload"
+      href="/assets/fonts/RobotoMono-Italic-VariableFont_wght.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
 
     <!-- Manifest and icons -->
     <link rel="manifest" href="/manifest.json" />
@@ -67,6 +68,22 @@
     <title>Algorust</title>
 
     <style>
+      @font-face {
+        font-family: 'Roboto Mono';
+        font-style: normal;
+        font-weight: 100 700;
+        font-display: optional;
+        src: url('/assets/fonts/RobotoMono-VariableFont_wght.ttf');
+      }
+
+      @font-face {
+        font-family: 'Roboto Mono';
+        font-style: italic;
+        font-weight: 100 700;
+        font-display: optional;
+        src: url('/assets/fonts/RobotoMono-Italic-VariableFont_wght.ttf');
+      }
+
       html,
       body {
         margin: 0;

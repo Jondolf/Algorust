@@ -3,6 +3,8 @@ const filesToCache = [
   '/index.html',
   '/assets/images/GitHub-Mark-64px.png',
   '/assets/images/GitHub-Mark-Light-64px.png',
+  '/assets/fonts/RobotoMono-VariableFont_wght.ttf',
+  '/assets/fonts/RobotoMono-Italic-VariableFont_wght.ttf',
 ];
 
 // Start the service worker and cache all of the app's content
