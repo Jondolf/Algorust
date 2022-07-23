@@ -1,9 +1,4 @@
 [[redirects]]
-from = "/*"
-to = "/index.html"
-status = 200
-
-[[redirects]]
 from = "https://algorust.netlify.app/*"
 to = "https://algorust.dev/:splat"
 status = 301
@@ -14,3 +9,8 @@ from = "https://algorust.com/*"
 to = "https://algorust.dev/:splat"
 status = 301
 force = true
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
