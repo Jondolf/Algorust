@@ -54,19 +54,17 @@ pub fn home_page() -> Html {
 
                 <p>
                     {
-                        "I have always wanted to learn about different kinds of technologies and algorithms. Inspired by some "
-                    }
-                    <a href="https://www.youtube.com/watch?v=kPRA0W1kECg" target="_blank">{ "sorting algorithm videos" }</a>
-                    {
-                        ", I ended up implementing a similar sorting visualizer as it seemed relatively straightforward and fun to make. Around that time I also found the Yew framework, and decided that it would be the perfect match as I wanted to use Rust in the project anyway."
+                        "While I was learning Rust, I stumbled upon the Yew web framework. I was interested in building a web application entirely in Rust, and decided that a website focused on algorithms would be perfect for both learning and testing out Rust's performance."
                     }
                 </p>
 
                 <p>
                     {
-                        "After finishing up most of the sorting visualizer, I started exploring other algorithm types. I ended up making a pathfinding visualizer as well, as I find it to be a really fun, interesting and useful learning experience. In the future I'll keep adding more features and algorithms when I find the time and interest to do so."
+                        "I ended up making a sorting visualization website with many different algorithms and configuration options. This was a great learning experience, but I wanted to look into other types of algorithms as well. I broadened the scope of the website from just sorting algorithms to algorithms in general, and added a pathfinding visualizer."
                     }
                 </p>
+
+                <p>{ "In the future I'll keep adding more features and algorithms when I find the time and interest to do so." }</p>
 
                 <h3>{ "Future" }</h3>
 
