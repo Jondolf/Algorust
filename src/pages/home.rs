@@ -14,7 +14,7 @@ pub fn home_page() -> Html {
 
                 <div class="buttons">
                     <Link<Route> to={Route::Sorting}>
-                        <button class="sorting-button">{ "Get sorting" }</button>
+                        <button class="sorting-button">{ "Go to sorting" }</button>
                     </Link<Route>>
 
                     <a href="https://github.com/Jondolf/rust-algorithms" target="_blank" aria-label="Link to this website's GitHub repository (opens in a new window)">
