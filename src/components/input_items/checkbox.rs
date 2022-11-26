@@ -9,8 +9,8 @@ pub struct CheckboxProps {
     pub oninput: Callback<InputEvent>,
 }
 
-#[function_component(Checkbox)]
-pub fn checkbox(props: &CheckboxProps) -> Html {
+#[function_component]
+pub fn Checkbox(props: &CheckboxProps) -> Html {
     let CheckboxProps {
         title,
         value,

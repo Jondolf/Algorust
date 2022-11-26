@@ -16,8 +16,8 @@ pub struct StepSliderProps {
     pub on_change: Callback<usize>,
 }
 
-#[function_component(StepSlider)]
-pub fn step_slider(props: &StepSliderProps) -> Html {
+#[function_component]
+pub fn StepSlider(props: &StepSliderProps) -> Html {
     let StepSliderProps {
         label,
         active_step_index,

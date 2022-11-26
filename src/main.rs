@@ -29,28 +29,28 @@ enum Route {
     PathfindingAlgorithm,
 }
 
-fn switch(routes: &Route) -> Html {
-    match routes {
+fn switch(route: Route) -> Html {
+    match route {
         Route::Home => html! {
             <pages::home::HomePage />
         },
         Route::Sorting => html! {
-            <Switch<pages::sorting::SortingRoute> render={Switch::render(pages::sorting::switch_sorting)} />
+            <Switch<pages::sorting::SortingRoute> render={pages::sorting::switch_sorting} />
         },
         Route::SortingAlgorithm => html! {
-            <Switch<pages::sorting::SortingRoute> render={Switch::render(pages::sorting::switch_sorting)} />
+            <Switch<pages::sorting::SortingRoute> render={pages::sorting::switch_sorting} />
         },
         Route::Pathfinding => html! {
-            <Switch<pages::pathfinding::PathfindingRoute> render={Switch::render(pages::pathfinding::switch_pathfinding)} />
+            <Switch<pages::pathfinding::PathfindingRoute> render={pages::pathfinding::switch_pathfinding} />
         },
         Route::PathfindingAlgorithm => html! {
-            <Switch<pages::pathfinding::PathfindingRoute> render={Switch::render(pages::pathfinding::switch_pathfinding)} />
+            <Switch<pages::pathfinding::PathfindingRoute> render={pages::pathfinding::switch_pathfinding} />
         },
     }
 }
 
-#[function_component(App)]
-fn app() -> Html {
+#[function_component]
+fn App() -> Html {
     let color_scheme = use_color_scheme();
     let update = use_update();
 
@@ -129,13 +129,13 @@ fn app() -> Html {
                         </a>
                     </div>
                 </div>
-                <Switch<Route> render={Switch::render(switch)} />
+                <Switch<Route> render={switch} />
             </ContextProvider<ColorScheme>>
         </BrowserRouter>
     }
 }
 
 fn main() {
-    yew::start_app::<App>();
     wasm_logger::init(wasm_logger::Config::default());
+    yew::Renderer::<App>::new().render();
 }

@@ -31,6 +31,7 @@ pub enum ColorSchemeMode {
     Dark,
 }
 
+#[hook]
 pub fn use_color_scheme() -> ColorScheme {
     let app_color_scheme = use_state_eq(|| ColorScheme::Light);
 

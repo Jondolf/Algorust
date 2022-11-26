@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use pathfinding::{Coord, Edge};
 use yew::prelude::*;
-use yew_router::{history::History, hooks::use_history};
+use yew_router::hooks::use_navigator;
 
 use crate::{
     components::input_items::*,
@@ -17,14 +17,14 @@ pub struct PathfindingControlsProps<E: 'static + Edge> {
     pub on_update_config: Callback<()>,
 }
 
-#[function_component(PathfindingControls)]
-pub fn pathfinding_controls<E: 'static + Edge>(props: &PathfindingControlsProps<E>) -> Html {
+#[function_component]
+pub fn PathfindingControls<E: 'static + Edge>(props: &PathfindingControlsProps<E>) -> Html {
     let PathfindingControlsProps {
         config,
         on_update_config,
     } = props.clone();
 
-    let history = use_history().unwrap();
+    let navigator = use_navigator().unwrap();
 
     let algorithm_names = use_state_eq(|| {
         get_pathfinding_algorithms()
@@ -76,7 +76,7 @@ pub fn pathfinding_controls<E: 'static + Edge>(props: &PathfindingControlsProps<
     };
 
     let change_algorithm = Callback::from(move |algorithm: String| {
-        history.push(PathfindingRoute::PathfindingAlgorithm {
+        navigator.push(&PathfindingRoute::PathfindingAlgorithm {
             algorithm: algorithm.replace(' ', "-").to_lowercase(),
         });
     });

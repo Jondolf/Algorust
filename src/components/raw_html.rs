@@ -6,8 +6,8 @@ pub struct RawHtmlProps {
     pub inner_html: String,
 }
 
-#[function_component(RawHtml)]
-pub fn raw_html(props: &RawHtmlProps) -> Html {
+#[function_component]
+pub fn RawHtml(props: &RawHtmlProps) -> Html {
     let el_ref = use_node_ref();
     let el: UseStateHandle<Option<Element>> = use_state_eq(|| None);
 

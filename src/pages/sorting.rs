@@ -80,7 +80,7 @@ pub fn get_sorting_algorithms() -> BTreeMap<&'static str, SortingAlgorithm> {
     ])
 }
 
-#[derive(Clone, Debug, Routable, PartialEq)]
+#[derive(Clone, Debug, Routable, PartialEq, Eq)]
 pub enum SortingRoute {
     #[at("/sorting")]
     Sorting,
@@ -88,7 +88,7 @@ pub enum SortingRoute {
     SortingAlgorithm { algorithm: String },
 }
 
-pub fn switch_sorting(route: &SortingRoute) -> Html {
+pub fn switch_sorting(route: SortingRoute) -> Html {
     match route {
         SortingRoute::Sorting => html! {
             <Redirect<SortingRoute> to={SortingRoute::SortingAlgorithm { algorithm: "bubble-sort".to_string()} } />
@@ -96,11 +96,11 @@ pub fn switch_sorting(route: &SortingRoute) -> Html {
         SortingRoute::SortingAlgorithm { algorithm } => {
             if get_sorting_algorithms().contains_key(algorithm.as_str()) {
                 html! {
-                    <SortingAlgorithmsPage algorithm={algorithm.to_string()} />
+                    <SortingAlgorithmsPage algorithm={algorithm} />
                 }
             } else {
                 html! {
-                    <Sorting404Page algorithm={algorithm.to_string()} />
+                    <Sorting404Page algorithm={algorithm} />
                 }
             }
         }
@@ -128,14 +128,14 @@ impl Default for SortConfig {
     }
 }
 
-#[derive(Properties, Clone, PartialEq)]
+#[derive(Properties, Clone, PartialEq, Eq)]
 pub struct SortingAlgorithmsPageProps {
     #[prop_or("bubble-sort".to_string())]
     pub algorithm: String,
 }
 
-#[function_component(SortingAlgorithmsPage)]
-pub fn sorting_algorithms_page(props: &SortingAlgorithmsPageProps) -> Html {
+#[function_component]
+pub fn SortingAlgorithmsPage(props: &SortingAlgorithmsPageProps) -> Html {
     let config = {
         let algorithm_name = props.algorithm.to_string();
 
@@ -367,8 +367,8 @@ struct Sorting404PageProps {
     algorithm: String,
 }
 
-#[function_component(Sorting404Page)]
-fn sorting_404_page(props: &Sorting404PageProps) -> Html {
+#[function_component]
+fn Sorting404Page(props: &Sorting404PageProps) -> Html {
     use_title("404 - Sorting".to_string());
 
     html! {

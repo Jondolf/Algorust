@@ -1,7 +1,7 @@
 use yew::prelude::*;
 
 /// Different drawing modes
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PathTool {
     Start,
     End,
@@ -22,8 +22,8 @@ pub struct PathToolbarProps {
     pub on_tool_change: Callback<PathTool>,
 }
 
-#[function_component(PathToolbar)]
-pub fn path_toolbar(props: &PathToolbarProps) -> Html {
+#[function_component]
+pub fn PathToolbar(props: &PathToolbarProps) -> Html {
     let tool_buttons = use_state_eq(|| {
         vec![
             PathToolButton {

@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-yew = "0.19.3"
-yew-router = "0.16.0"
-yew-hooks = "0.1.40"
+yew = { version = "0.20.0", features = ["csr"] }
+yew-router = "0.17.0"
+yew-hooks = "0.2.0"
 gloo-events = "0.1.1"
 gloo-storage = "0.2.1"
 wasm-bindgen = "0.2.79"

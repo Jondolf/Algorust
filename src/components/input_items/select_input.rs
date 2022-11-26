@@ -11,8 +11,8 @@ pub struct SelectInputProps {
     pub onchange: Callback<String>,
 }
 
-#[function_component(SelectInput)]
-pub fn select_input(props: &SelectInputProps) -> Html {
+#[function_component]
+pub fn SelectInput(props: &SelectInputProps) -> Html {
     let SelectInputProps {
         title,
         options,

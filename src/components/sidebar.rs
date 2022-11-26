@@ -15,8 +15,8 @@ pub struct SidebarProps {
     pub children: Children,
 }
 
-#[function_component(Sidebar)]
-pub fn sidebar(props: &SidebarProps) -> Html {
+#[function_component]
+pub fn Sidebar(props: &SidebarProps) -> Html {
     let width_px = use_state_eq(|| 350); // Used on large screens, sidebar on the left side
     let height_px = use_state_eq(|| 350); // Used on small screens, sidebar at the bottom
     let resizing_width = use_state_eq(|| false);

@@ -26,14 +26,14 @@ pub struct SortGraphProps {
     pub step: UseStateHandle<Vec<SortCommand<u32>>>,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct SortGraphConfig {
     color_changed: String,
     color_unchanged: String,
 }
 
-#[function_component(SortGraph)]
-pub fn sort_graph(props: &SortGraphProps) -> Html {
+#[function_component]
+pub fn SortGraph(props: &SortGraphProps) -> Html {
     let app_color_scheme = use_context::<ColorScheme>().expect("no color scheme context found");
     let canvas_ref = use_node_ref();
     let canvas_container_ref = use_node_ref();

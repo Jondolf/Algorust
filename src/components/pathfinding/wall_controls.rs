@@ -8,8 +8,8 @@ pub struct WallControlsProps {
     pub on_generate_maze: Callback<()>,
 }
 
-#[function_component(WallControls)]
-pub fn pathfinding_controls(props: &WallControlsProps) -> Html {
+#[function_component]
+pub fn WallControls(props: &WallControlsProps) -> Html {
     let WallControlsProps {
         on_clear_walls,
         on_generate_maze,

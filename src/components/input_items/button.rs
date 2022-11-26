@@ -6,8 +6,8 @@ pub struct ButtonProps {
     pub onclick: Callback<MouseEvent>,
 }
 
-#[function_component(Button)]
-pub fn button(props: &ButtonProps) -> Html {
+#[function_component]
+pub fn Button(props: &ButtonProps) -> Html {
     let ButtonProps { title, onclick } = props.clone();
 
     html! {

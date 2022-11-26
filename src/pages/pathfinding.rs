@@ -26,7 +26,7 @@ pub type EdgeType = f32;
 type PathfindingFunc<V, E> =
     fn(AdjacencyList<V, E>, V, V, PathfindingSteps<V>) -> PathfindingResult<V, E>;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PathfindingAlgorithm<V: Vertex, E: Edge> {
     pub name: String,
     find_path: PathfindingFunc<V, E>,
@@ -77,7 +77,7 @@ pub fn get_pathfinding_algorithms<V: Vertex, E: Edge>(
     ])
 }
 
-#[derive(Clone, Debug, Routable, PartialEq)]
+#[derive(Clone, Debug, Routable, PartialEq, Eq)]
 pub enum PathfindingRoute {
     #[at("/pathfinding")]
     Pathfinding,
@@ -85,7 +85,7 @@ pub enum PathfindingRoute {
     PathfindingAlgorithm { algorithm: String },
 }
 
-pub fn switch_pathfinding(route: &PathfindingRoute) -> Html {
+pub fn switch_pathfinding(route: PathfindingRoute) -> Html {
     match route {
         PathfindingRoute::Pathfinding => html! {
             <Redirect<PathfindingRoute> to={PathfindingRoute::PathfindingAlgorithm { algorithm: "dfs".to_string()} } />
@@ -93,11 +93,11 @@ pub fn switch_pathfinding(route: &PathfindingRoute) -> Html {
         PathfindingRoute::PathfindingAlgorithm { algorithm } => {
             if get_pathfinding_algorithms::<Coord, EdgeType>().contains_key(algorithm.as_str()) {
                 html! {
-                    <PathfindingPage algorithm={algorithm.to_string()} />
+                    <PathfindingPage algorithm={algorithm} />
                 }
             } else {
                 html! {
-                    <Pathfinding404Page algorithm={algorithm.to_string()} />
+                    <Pathfinding404Page algorithm={algorithm} />
                 }
             }
         }
@@ -124,14 +124,14 @@ impl<E: Edge> Default for PathfindingConfig<E> {
     }
 }
 
-#[derive(Properties, Clone, PartialEq)]
+#[derive(Properties, Clone, PartialEq, Eq)]
 pub struct PathfindingPageProps {
     #[prop_or("dijkstra".to_string())]
     pub algorithm: String,
 }
 
-#[function_component(PathfindingPage)]
-pub fn pathfinding_algorithms_page(props: &PathfindingPageProps) -> Html {
+#[function_component]
+pub fn PathfindingPage(props: &PathfindingPageProps) -> Html {
     let config = {
         let algorithm_name = props.algorithm.to_string();
 
@@ -606,8 +606,8 @@ struct Pathfinding404PageProps {
     algorithm: String,
 }
 
-#[function_component(Pathfinding404Page)]
-fn pathfinding_404_page(props: &Pathfinding404PageProps) -> Html {
+#[function_component]
+fn Pathfinding404Page(props: &Pathfinding404PageProps) -> Html {
     use_title("404 - Pathfinding algorithms".to_string());
 
     html! {

@@ -32,8 +32,8 @@ pub struct AudioControlsProps {
     pub update_config: Callback<(AudioConfig, bool)>,
 }
 
-#[function_component(AudioControls)]
-pub fn audio_controls(props: &AudioControlsProps) -> Html {
+#[function_component]
+pub fn AudioControls(props: &AudioControlsProps) -> Html {
     let AudioControlsProps {
         config,
         update_config,

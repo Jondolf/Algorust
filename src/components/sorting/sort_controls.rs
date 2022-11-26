@@ -1,5 +1,5 @@
 use yew::prelude::*;
-use yew_router::{history::History, hooks::use_history};
+use yew_router::hooks::use_navigator;
 
 use crate::{
     components::input_items::*,
@@ -14,15 +14,15 @@ pub struct SortControlsProps {
     pub update_config: Callback<(SortConfig, bool)>,
 }
 
-#[function_component(SortControls)]
-pub fn sort_controls(props: &SortControlsProps) -> Html {
+#[function_component]
+pub fn SortControls(props: &SortControlsProps) -> Html {
     let SortControlsProps {
         config,
         update_input,
         update_config,
     } = props.clone();
 
-    let history = use_history().unwrap();
+    let navigator = use_navigator().unwrap();
 
     let algorithm_names = use_state_eq(|| {
         get_sorting_algorithms()
@@ -68,7 +68,7 @@ pub fn sort_controls(props: &SortControlsProps) -> Html {
         })
     };
     let change_algorithm = Callback::from(move |algorithm: String| {
-        history.push(SortingRoute::SortingAlgorithm {
+        navigator.push(&SortingRoute::SortingAlgorithm {
             algorithm: algorithm.replace(' ', "-").to_lowercase(),
         });
     });

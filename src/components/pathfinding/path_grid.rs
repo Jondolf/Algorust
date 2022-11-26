@@ -19,7 +19,7 @@ extern "C" {
     fn clearTimeout(timeout_id: i32);
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct PathGridConfig {
     color_start: String,
     color_end: String,
@@ -43,8 +43,8 @@ pub struct PathGridProps {
     pub on_draw_end: Callback<()>,
 }
 
-#[function_component(PathGrid)]
-pub fn path_grid(props: &PathGridProps) -> Html {
+#[function_component]
+pub fn PathGrid(props: &PathGridProps) -> Html {
     let PathGridProps {
         width,
         height,

@@ -9,8 +9,8 @@ pub struct CollapsibleProps {
     pub open: bool,
 }
 
-#[function_component(Collapsible)]
-pub fn collapsible(props: &CollapsibleProps) -> Html {
+#[function_component]
+pub fn Collapsible(props: &CollapsibleProps) -> Html {
     let open = use_state(|| props.open);
     let onclick = {
         let open = open.clone();

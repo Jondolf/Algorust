@@ -2,6 +2,7 @@ use wasm_bindgen::{prelude::Closure, JsCast};
 use web_sys::window;
 use yew::prelude::*;
 
+#[hook]
 pub fn use_mouse_pos() -> (i32, i32) {
     let mouse_pos = use_state_eq(|| (0, 0));
 

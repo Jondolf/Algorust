@@ -5,13 +5,13 @@ use web_sys::window;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_mount};
 
-#[derive(Clone, Properties, PartialEq)]
+#[derive(Clone, Properties, PartialEq, Eq)]
 pub struct AlgoDescProps {
     pub algorithm: String,
 }
 
-#[function_component(AlgoDesc)]
-pub fn algo_desc(props: &AlgoDescProps) -> Html {
+#[function_component]
+pub fn AlgoDesc(props: &AlgoDescProps) -> Html {
     let url = use_state(String::new);
 
     {
@@ -51,7 +51,7 @@ pub fn algo_desc(props: &AlgoDescProps) -> Html {
 
     {
         let md = md.clone();
-        use_effect_with_deps(move |_| || md.run(), url);
+        use_effect_with_deps(move |_| move || md.run(), url);
     }
 
     html! {

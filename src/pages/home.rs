@@ -3,8 +3,8 @@ use yew_router::prelude::*;
 
 use crate::Route;
 
-#[function_component(HomePage)]
-pub fn home_page() -> Html {
+#[function_component]
+pub fn HomePage() -> Html {
     html! {
         <div id="home">
             <header>

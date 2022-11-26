@@ -8,6 +8,7 @@ use crate::{
 use sorting::SortCommand;
 use yew::prelude::*;
 
+#[hook]
 pub fn use_sort_audio(
     items: UseStateHandle<Vec<u32>>,
     step: UseStateHandle<Vec<SortCommand<u32>>>,

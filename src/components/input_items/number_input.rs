@@ -19,8 +19,8 @@ pub struct IntInputProps<T: 'static + Clone + Copy + Display + PartialEq + PrimI
     pub oninput: Callback<T>,
 }
 
-#[function_component(IntInput)]
-pub fn int_input<T: 'static + Clone + Copy + Display + PartialEq + PrimInt + FromStr>(
+#[function_component]
+pub fn IntInput<T: 'static + Clone + Copy + Display + PartialEq + PrimInt + FromStr>(
     props: &IntInputProps<T>,
 ) -> Html {
     let IntInputProps {
@@ -68,8 +68,8 @@ pub struct FloatInputProps<T: 'static + Clone + Copy + Display + PartialEq + Flo
     pub oninput: Callback<T>,
 }
 
-#[function_component(FloatInput)]
-pub fn float_input<T: 'static + Clone + Copy + Display + PartialEq + Float + FromStr>(
+#[function_component]
+pub fn FloatInput<T: 'static + Clone + Copy + Display + PartialEq + Float + FromStr>(
     props: &FloatInputProps<T>,
 ) -> Html {
     let FloatInputProps {
